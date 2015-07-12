@@ -2,6 +2,7 @@
 using FluentValidation;
 using FluentValidation.Validators;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Validation
 {

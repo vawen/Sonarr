@@ -1,0 +1,7 @@
+{{#each languages}}
+    {{#if selected}}
+		<option value={{id}} selected="selected">{{name}}</option>
+	{{else}}
+		<option value={{id}}>{{name}}</option>
+	{{/if}}
+{{/each}}

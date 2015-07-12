@@ -8,6 +8,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Parser
 {

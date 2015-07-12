@@ -6,6 +6,7 @@ using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Profiles
 {

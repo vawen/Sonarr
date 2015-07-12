@@ -1,4 +1,5 @@
 ﻿using FluentValidation.Validators;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Validation
 {
@@ -12,8 +13,9 @@ namespace NzbDrone.Core.Validation
         protected override bool IsValid(PropertyValidatorContext context)
         {
             if (context.PropertyValue == null) return false;
+            if (!context.PropertyValue.GetType().Equals(typeof(Language))) return false;
 
-            if ((int) context.PropertyValue == 0) return false;
+            if (((Language) context.PropertyValue).Id == 0) return false;
 
             return true;
         }

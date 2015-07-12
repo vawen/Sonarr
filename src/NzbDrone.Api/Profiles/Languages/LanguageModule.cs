@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Api.Profiles.Languages
 {
@@ -15,25 +16,26 @@ namespace NzbDrone.Api.Profiles.Languages
 
         private LanguageResource GetById(int id)
         {
-            var language = (Language)id;
+            var language = Language.FindById(id);
 
             return new LanguageResource
             {
-                Id = (int)language,
-                Name = language.ToString()
+                Id = language.Id,
+                Name = language.Name
             };
         }
 
         private List<LanguageResource> GetAll()
         {
-            return ((Language[])Enum.GetValues(typeof (Language)))
-                                    .Select(l => new LanguageResource
-                                                    {
-                                                        Id = (int) l,
-                                                        Name = l.ToString()
-                                                    })
-                                    .OrderBy(l => l.Name)
-                                    .ToList();
+
+            return Language.All.
+                Select(l => new LanguageResource
+                    {
+                        Id = l.Id,
+                        Name = l.Name
+                    })
+                    .OrderBy(l => l.Name)
+                    .ToList();
         }
     }
 }

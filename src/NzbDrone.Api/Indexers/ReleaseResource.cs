@@ -4,6 +4,7 @@ using NzbDrone.Api.REST;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Api.Indexers
 {

@@ -4,6 +4,7 @@ using System.Linq;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Qualities;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Profiles
 {

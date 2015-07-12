@@ -12,10 +12,10 @@
     <label class="col-sm-3 control-label">Language</label>
 
     <div class="col-sm-5">
-        <select class="form-control" name="language">
+        <select class="form-control" name="language.id" validation-name="language2">
             {{#each languages}}
                 {{#unless_eq nameLower compare="unknown"}}
-                    <option value="{{nameLower}}">{{name}}</option>
+                    <option value={{id}}>{{name}}</option>
                 {{/unless_eq}}
             {{/each}}
         </select>
