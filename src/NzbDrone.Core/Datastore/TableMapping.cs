@@ -32,6 +32,7 @@ using NzbDrone.Core.Tv;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Datastore
 {
@@ -130,6 +131,7 @@ namespace NzbDrone.Core.Datastore
             MapRepository.Instance.RegisterTypeConverter(typeof(QualityModel), new EmbeddedDocumentConverter(new QualityIntConverter()));
             MapRepository.Instance.RegisterTypeConverter(typeof(Dictionary<String, String>), new EmbeddedDocumentConverter());
             MapRepository.Instance.RegisterTypeConverter(typeof(List<Int32>), new EmbeddedDocumentConverter());
+            MapRepository.Instance.RegisterTypeConverter(typeof(Language), new LanguageIntConverter());
             MapRepository.Instance.RegisterTypeConverter(typeof(List<String>), new EmbeddedDocumentConverter());
             MapRepository.Instance.RegisterTypeConverter(typeof(ParsedEpisodeInfo), new EmbeddedDocumentConverter());
             MapRepository.Instance.RegisterTypeConverter(typeof(ReleaseInfo), new EmbeddedDocumentConverter());

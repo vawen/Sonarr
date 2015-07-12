@@ -3,11 +3,11 @@ var Handlebars = require('handlebars');
 var LanguageCollection = require('./Language/LanguageCollection');
 
 Handlebars.registerHelper('languageLabel', function() {
-    var wantedLanguage = this.language;
 
-    var language = LanguageCollection.find(function(lang) {
-        return lang.get('nameLower') === wantedLanguage;
-    });
+	var wantedLanguage = this.language;
+	var language = LanguageCollection.find(function(lang) {
+		return lang.get('name') === wantedLanguage.name;
+	});
 
     var result = '<span class="label label-primary">' + language.get('name') + '</span>';
 

@@ -69,6 +69,7 @@ namespace NzbDrone.Api.EpisodeFiles
         {
             var episodeFile = _mediaFileService.Get(episodeFileResource.Id);
             episodeFile.Quality = episodeFileResource.Quality;
+            episodeFile.Language = episodeFileResource.Language;
             _mediaFileService.Update(episodeFile);
         }
 

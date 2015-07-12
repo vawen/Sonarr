@@ -4,6 +4,7 @@ using NzbDrone.Api.Mapping;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Qualities;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Api.Profiles
 {
@@ -31,7 +32,13 @@ namespace NzbDrone.Api.Profiles
             profile.Items = items;
             profile.Language = Language.English;
 
-            return new List<ProfileResource> { profile.InjectTo<ProfileResource>() };
+
+            var result = new List<ProfileResource> { profile.InjectTo<ProfileResource>() };
+            foreach (var p in result)
+            {
+                p.Languages = Language.All.OrderBy(l => l.Name).ToList();
+            }
+            return result;
         }
     }
 }

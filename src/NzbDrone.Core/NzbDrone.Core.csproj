@@ -162,6 +162,7 @@
     <Compile Include="Datastore\Converters\DoubleConverter.cs" />
     <Compile Include="Datastore\Converters\EmbeddedDocumentConverter.cs" />
     <Compile Include="Datastore\Converters\EnumIntConverter.cs" />
+    <Compile Include="Datastore\Converters\LanguageIntConverter.cs" />
     <Compile Include="Datastore\Converters\TimeSpanConverter.cs" />
     <Compile Include="Datastore\Converters\Int32Converter.cs" />
     <Compile Include="Datastore\Converters\GuidConverter.cs" />
@@ -271,6 +272,7 @@
     <Compile Include="Datastore\Migration\090_update_kickass_url.cs" />
     <Compile Include="Datastore\Migration\091_added_indexerstatus.cs" />
     <Compile Include="Datastore\Migration\092_add_unverifiedscenenumbering.cs" />
+    <Compile Include="Datastore\Migration\095_add_language_to_episodeFiles.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationContext.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationController.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationDbFactory.cs" />
@@ -592,6 +594,7 @@
     <Compile Include="Jobs\ScheduledTask.cs" />
     <Compile Include="Jobs\Scheduler.cs" />
     <Compile Include="Jobs\TaskManager.cs" />
+    <Compile Include="Languages\Language.cs" />
     <Compile Include="Lifecycle\ApplicationShutdownRequested.cs" />
     <Compile Include="Lifecycle\ApplicationStartedEvent.cs" />
     <Compile Include="Lifecycle\Commands\RestartCommand.cs" />
@@ -859,7 +862,6 @@
     <Compile Include="Organizer\NamingConfigService.cs" />
     <Compile Include="Organizer\SampleResult.cs" />
     <Compile Include="Parser\InvalidDateException.cs" />
-    <Compile Include="Parser\Language.cs" />
     <Compile Include="Parser\Model\LocalEpisode.cs" />
     <Compile Include="Parser\Model\ParsedEpisodeInfo.cs" />
     <Compile Include="Parser\Model\ReleaseInfo.cs" />
