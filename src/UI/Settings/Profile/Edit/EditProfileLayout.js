@@ -4,7 +4,9 @@ var AppLayout = require('../../../AppLayout');
 var Marionette = require('marionette');
 var Backbone = require('backbone');
 var EditProfileItemView = require('./EditProfileItemView');
+var EditProfileLanguageView = require('./EditProfileLanguageView');
 var QualitySortableCollectionView = require('./QualitySortableCollectionView');
+var LanguageSortableCollectionView = require('./LanguageSortableCollectionView');
 var EditProfileView = require('./EditProfileView');
 var DeleteView = require('../DeleteProfileView');
 var SeriesCollection = require('../../../Series/SeriesCollection');
@@ -15,6 +17,7 @@ var view = Marionette.Layout.extend({
     template : 'Settings/Profile/Edit/EditProfileLayoutTemplate',
 
     regions : {
+        languages : '#x-languages',
         fields    : '#x-fields',
         qualities : '#x-qualities'
     },
@@ -28,6 +31,7 @@ var view = Marionette.Layout.extend({
     initialize : function(options) {
         this.profileCollection = options.profileCollection;
         this.itemsCollection = new Backbone.Collection(_.toArray(this.model.get('items')).reverse());
+		this.languagesCollection = new Backbone.Collection(_.toArray(this.model.get('languages')).reverse());
         this.listenTo(SeriesCollection, 'all', this._updateDisableStatus);
     },
 
@@ -39,6 +43,32 @@ var view = Marionette.Layout.extend({
         this.fieldsView = new EditProfileView({ model : this.model });
         this._showFieldsView();
         var advancedShown = Config.getValueBoolean(Config.Keys.AdvancedSettings, false);
+
+        this.secondSortableListView = new LanguageSortableCollectionView({
+            selectable     : true,
+            selectMultiple : true,
+            clickToSelect  : true,
+            clickToToggle  : true,
+            sortable       : advancedShown,
+
+            sortableOptions : {
+                handle : '.x-drag-handle'
+            },
+
+            visibleModelsFilter : function(model) {
+                return model.get('language').id !== 0 || advancedShown;
+            },
+
+            collection : this.languagesCollection,
+            model      : this.model
+        });
+		
+        this.secondSortableListView.setSelectedModels(this.languagesCollection.filter(function(lang) {
+            return lang.get('allowed') === true;
+        }));
+        this.languages.show(this.secondSortableListView);
+        this.listenTo(this.secondSortableListView, 'selectionChanged', this._selectionChanged);
+        this.listenTo(this.secondSortableListView, 'sortStop', this._updateModel);	
 
         this.sortableListView = new QualitySortableCollectionView({
             selectable     : true,
@@ -70,7 +100,9 @@ var view = Marionette.Layout.extend({
 
     _onBeforeSave : function() {
         var cutoff = this.fieldsView.getCutoff();
+		var cutoffLanguage = this.fieldsView.getLanguageCutoff();
         this.model.set('cutoff', cutoff);
+		this.model.set('cutoffLanguage', cutoffLanguage);
     },
 
     _onAfterSave : function() {
@@ -93,6 +125,7 @@ var view = Marionette.Layout.extend({
 
     _updateModel : function() {
         this.model.set('items', this.itemsCollection.toJSON().reverse());
+		this.model.set('languages', this.languagesCollection.toJSON().reverse());
 
         this._showFieldsView();
     },

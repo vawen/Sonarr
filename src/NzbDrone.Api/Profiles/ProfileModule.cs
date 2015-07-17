@@ -4,6 +4,7 @@ using NzbDrone.Api.Mapping;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Validation;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Api.Profiles
 {
@@ -16,8 +17,9 @@ namespace NzbDrone.Api.Profiles
             _profileService = profileService;
             SharedValidator.RuleFor(c => c.Name).NotEmpty();
             SharedValidator.RuleFor(c => c.Cutoff).NotNull();
+            SharedValidator.RuleFor(c => c.CutoffLanguage).NotNull();
             SharedValidator.RuleFor(c => c.Items).MustHaveAllowedQuality();
-            SharedValidator.RuleFor(c => c.Language).ValidLanguage();
+			SharedValidator.RuleFor(c => c.Languages).MustHaveAllowedLanguage();
 
             GetResourceAll = GetAll;
             GetResourceById = GetById;
@@ -45,7 +47,10 @@ namespace NzbDrone.Api.Profiles
             model.Name = resource.Name;
             model.Cutoff = (Quality)resource.Cutoff.Id;
             model.Items = resource.Items.InjectTo<List<ProfileQualityItem>>();
-            model.Language = resource.Language;
+            model.Languages = resource.Languages.InjectTo<List<ProfileLanguageItem>>();
+            model.CutoffLanguage = (Language)resource.CutoffLanguage.Id;
+            model.LanguageOverQuality = resource.LanguageOverQuality;
+            model.AllowLanguageUpgrade = resource.AllowLanguageUpgrade;
 
             _profileService.Update(model);
         }

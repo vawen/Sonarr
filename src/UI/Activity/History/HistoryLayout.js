@@ -7,6 +7,7 @@ var EpisodeNumberCell = require('../../Cells/EpisodeNumberCell');
 var EpisodeTitleCell = require('../../Cells/EpisodeTitleCell');
 var HistoryQualityCell = require('./HistoryQualityCell');
 var RelativeDateCell = require('../../Cells/RelativeDateCell');
+var LanguageCell = require('../../Cells/LanguageCell');
 var HistoryDetailsCell = require('./HistoryDetailsCell');
 var GridPager = require('../../Shared/Grid/Pager');
 var ToolbarLayout = require('../../Shared/Toolbar/ToolbarLayout');
@@ -45,6 +46,12 @@ module.exports = Marionette.Layout.extend({
             cell     : EpisodeTitleCell,
             sortable : false
         },
+		{
+            name     : 'language',
+            label    : 'Language',
+            cell     : LanguageCell,
+            sortable : false			
+		},
         {
             name     : 'this',
             label    : 'Quality',

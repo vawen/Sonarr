@@ -69,7 +69,20 @@ namespace NzbDrone.Core.Profiles
                             .Select(v => new ProfileQualityItem { Quality = v.Quality, Allowed = allowed.Contains(v.Quality) })
                             .ToList();
 
-            var profile = new Profile { Name = name, Cutoff = cutoff, Items = items, Language = Language.English };
+            var languages = Language.All
+                                .OrderByDescending(l => l.Name)
+                                .Select(v => new ProfileLanguageItem { Language = v, Allowed = v == Language.English })
+                                .ToList();
+
+            var profile = new Profile { Name = name, 
+                Cutoff = cutoff, 
+                Items = items, 
+                CutoffLanguage = 
+                Language.English, 
+                Languages = languages, 
+                AllowLanguageUpgrade = false, 
+                LanguageOverQuality = false
+            };
 
             return Add(profile);
         }

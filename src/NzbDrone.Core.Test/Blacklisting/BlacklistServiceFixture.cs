@@ -6,6 +6,7 @@ using NzbDrone.Core.Blacklisting;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Test.Blacklisting
 {

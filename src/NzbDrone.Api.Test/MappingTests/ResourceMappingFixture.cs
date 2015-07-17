@@ -26,6 +26,7 @@ using NzbDrone.Core.Tv;
 using NzbDrone.Core.Update.Commands;
 using NzbDrone.Test.Common;
 using System.Linq;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Api.Test.MappingTests
 {
@@ -43,6 +44,7 @@ namespace NzbDrone.Api.Test.MappingTests
         [TestCase(typeof(Core.History.History), typeof(HistoryResource))]
         [TestCase(typeof(Profile), typeof(ProfileResource))]
         [TestCase(typeof(ProfileQualityItem), typeof(ProfileQualityItemResource))]
+        [TestCase(typeof(ProfileLanguageItem), typeof(ProfileLanguageItemResource))]
         [TestCase(typeof(Log), typeof(LogResource))]
         [TestCase(typeof(Command), typeof(CommandResource))]
         public void matching_fields(Type modelType, Type resourceType)
@@ -109,7 +111,9 @@ namespace NzbDrone.Api.Test.MappingTests
             var profileResource = new ProfileResource
                 {
                     Cutoff = Quality.WEBDL1080p,
-                    Items = new List<ProfileQualityItemResource> { new ProfileQualityItemResource { Quality = Quality.WEBDL1080p, Allowed = true } }
+                    Items = new List<ProfileQualityItemResource> { new ProfileQualityItemResource { Quality = Quality.WEBDL1080p, Allowed = true } },
+                    Languages = new List<ProfileLanguageItemResource> { new ProfileLanguageItemResource { Language = Language.English, Allowed = true } },
+                    CutoffLanguage = Language.English
                 };
 
 

@@ -12,8 +12,10 @@ namespace NzbDrone.Api.Profiles
         public String Name { get; set; }
         public Quality Cutoff { get; set; }
         public List<ProfileQualityItemResource> Items { get; set; }
-        public Language Language { get; set; }
-        public List<Language> Languages { get; set; }
+        public List<ProfileLanguageItemResource> Languages { get; set; }
+        public Language CutoffLanguage { get; set; }
+        public Boolean AllowLanguageUpgrade { get; set; }
+        public Boolean LanguageOverQuality { get; set; }
     }
 
     public class ProfileQualityItemResource : RestResource
@@ -21,4 +23,11 @@ namespace NzbDrone.Api.Profiles
         public Quality Quality { get; set; }
         public bool Allowed { get; set; }
     }
+
+    public class ProfileLanguageItemResource : RestResource
+    {
+        public Language Language { get; set; }
+        public bool Allowed { get; set; }
+    }
+
 }

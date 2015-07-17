@@ -13,11 +13,19 @@ namespace NzbDrone.Core.Profiles
         public String Name { get; set; }
         public Quality Cutoff { get; set; }
         public List<ProfileQualityItem> Items { get; set; }
-        public Language Language { get; set; }
+        public List<ProfileLanguageItem> Languages { get; set; }
+        public Language CutoffLanguage { get; set;  }
+        public bool AllowLanguageUpgrade { get; set; }
+        public bool LanguageOverQuality { get; set; }
 
         public Quality LastAllowedQuality()
         {
             return Items.Last(q => q.Allowed).Quality;
+        }
+
+        public Language LastAllowedLanguage()
+        {
+            return Languages.Last(q => q.Allowed).Language;
         }
     }
 }

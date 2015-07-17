@@ -8,12 +8,14 @@ var AsValidatedView = require('../../../Mixins/AsValidatedView');
 var view = Marionette.ItemView.extend({
     template : 'Settings/Profile/Edit/EditProfileViewTemplate',
 
-    ui : { cutoff : '.x-cutoff' },
+    ui : { cutoff : '.x-cutoff',
+		   languageCutoff : '.x-languageCutoff'
+	     },
+		 
+	getLanguageCutoff : function () {
+		var self = this;
 
-    templateHelpers : function() {
-        return {
-            languages : LanguageCollection.toJSON()
-        };
+		return _.findWhere(_.pluck(this.model.get('languages'), 'language'), { id: parseInt(self.ui.languageCutoff.val(), 10) });
     },
 
     getCutoff : function() {

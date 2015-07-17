@@ -1,4 +1,5 @@
 using NLog;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Qualities;
 
@@ -6,8 +7,8 @@ namespace NzbDrone.Core.DecisionEngine
 {
     public interface IQualityUpgradableSpecification
     {
-        bool IsUpgradable(Profile profile, QualityModel currentQuality, QualityModel newQuality = null);
-        bool CutoffNotMet(Profile profile, QualityModel currentQuality, QualityModel newQuality = null);
+        bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null, Language newLanguage = null);
+        bool CutoffNotMet(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null);
         bool IsRevisionUpgrade(QualityModel currentQuality, QualityModel newQuality);
     }
 
@@ -20,14 +21,32 @@ namespace NzbDrone.Core.DecisionEngine
             _logger = logger;
         }
 
-        public bool IsUpgradable(Profile profile, QualityModel currentQuality, QualityModel newQuality = null)
+        public bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null, Language newLanguage = null)
         {
+            if (newLanguage != null && newLanguage != currentLanguage && !profile.AllowLanguageUpgrade && !profile.LanguageOverQuality)
+            {
+                _logger.Debug("existing item has language and no upgrade allowed. skipping");
+                return false;
+            }
+
+            if (newLanguage != null && profile.AllowLanguageUpgrade && profile.LanguageOverQuality)
+            {
+                int compare = new LanguageComparer(profile).Compare(newLanguage, currentLanguage);
+                if (compare < 0)
+                {
+                    _logger.Debug("existing item has better language. skipping");
+                    return false;
+                }
+                if (compare > 0)
+                    return true;
+            }
+
             if (newQuality != null)
             {
                 int compare = new QualityModelComparer(profile).Compare(newQuality, currentQuality);
-                if (compare <= 0)
+                if (compare < 0)
                 {
-                    _logger.Debug("existing item has better or equal quality. skipping");
+                    _logger.Debug("existing item has better quality. skipping");
                     return false;
                 }
 
@@ -35,14 +54,30 @@ namespace NzbDrone.Core.DecisionEngine
                 {
                     return true;
                 }
+
+                if (compare == 0 && newLanguage != null && profile.AllowLanguageUpgrade && new LanguageComparer(profile).Compare(newLanguage, currentLanguage) > 0)
+                {
+                    return true;
+                }
+
+                if (compare == 0)
+                {
+                    _logger.Debug("existing item has better quality. skipping");
+                    return false;
+                }
             }
 
             return true;
         }
 
-        public bool CutoffNotMet(Profile profile, QualityModel currentQuality, QualityModel newQuality = null)
+        public bool CutoffNotMet(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null)
         {
+            int languageCompare = new LanguageComparer(profile).Compare(currentLanguage, profile.CutoffLanguage);
             int compare = new QualityModelComparer(profile).Compare(currentQuality.Quality, profile.Cutoff);
+
+            // If we can upgrade the language and it is not the cutoff then doesn't matter the quality we can always get same quality with prefered language
+            if (profile.AllowLanguageUpgrade && languageCompare < 0)
+                return true;
 
             if (compare >= 0)
             {

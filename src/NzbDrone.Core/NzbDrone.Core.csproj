@@ -242,6 +242,8 @@
     <Compile Include="Datastore\Migration\060_remove_enable_from_indexers.cs" />
     <Compile Include="Datastore\Migration\062_convert_quality_models.cs" />
     <Compile Include="Datastore\Migration\065_make_scene_numbering_nullable.cs" />
+    <Compile Include="Datastore\Migration\110_history_language.cs" />
+    <Compile Include="Datastore\Migration\120_blacklist_language.cs" />
     <Compile Include="Datastore\Migration\087_remove_eztv.cs" />
     <Compile Include="Datastore\Migration\078_add_commands_table.cs" />
     <Compile Include="Datastore\Migration\068_add_release_restrictions.cs" />
@@ -266,6 +268,7 @@
     <Compile Include="Datastore\Migration\088_pushbullet_devices_channels_list.cs" />
     <Compile Include="Datastore\Migration\090_update_kickass_url.cs" />
     <Compile Include="Datastore\Migration\095_add_language_to_episodeFiles.cs" />
+    <Compile Include="Datastore\Migration\100_update_profile_language.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationContext.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationController.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationDbFactory.cs" />
@@ -575,6 +578,8 @@
     <Compile Include="Jobs\Scheduler.cs" />
     <Compile Include="Jobs\TaskManager.cs" />
     <Compile Include="Languages\Language.cs" />
+    <Compile Include="Languages\LanguageComparer.cs" />
+    <Compile Include="Languages\LanguagesBelowCutoff.cs" />
     <Compile Include="Lifecycle\ApplicationShutdownRequested.cs" />
     <Compile Include="Lifecycle\ApplicationStartedEvent.cs" />
     <Compile Include="Lifecycle\Commands\RestartCommand.cs" />
@@ -722,6 +727,7 @@
     <Compile Include="Profiles\Delay\DelayProfile.cs" />
     <Compile Include="Profiles\Delay\DelayProfileService.cs" />
     <Compile Include="Profiles\Delay\DelayProfileTagInUseValidator.cs" />
+    <Compile Include="Profiles\ProfileLanguageItem.cs" />
     <Compile Include="Profiles\ProfileRepository.cs" />
     <Compile Include="ProgressMessaging\ProgressMessageContext.cs" />
     <Compile Include="Qualities\Revision.cs" />
@@ -945,7 +951,6 @@
     <Compile Include="Update\UpdateVerificationFailedException.cs" />
     <Compile Include="Validation\FolderValidator.cs" />
     <Compile Include="Validation\IpValidation.cs" />
-    <Compile Include="Validation\LanguageValidator.cs" />
     <Compile Include="Validation\NzbDroneValidationFailure.cs" />
     <Compile Include="Validation\NzbDroneValidationResult.cs" />
     <Compile Include="Validation\NzbDroneValidationState.cs" />

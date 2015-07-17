@@ -5,6 +5,7 @@ using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Delay;
 using NzbDrone.Core.Qualities;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
 {
@@ -51,22 +52,18 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             }
 
             var comparer = new QualityModelComparer(profile);
+            var comparerLanguage = new LanguageComparer(profile);
 
             if (isPreferredProtocol)
             {
                 foreach (var file in subject.Episodes.Where(c => c.EpisodeFileId != 0).Select(c => c.EpisodeFile.Value))
                 {
-                    var upgradable = _qualityUpgradableSpecification.IsUpgradable(profile, file.Quality, subject.ParsedEpisodeInfo.Quality);
+                    var upgradable = _qualityUpgradableSpecification.IsUpgradable(profile, file.Quality, file.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language);
 
                     if (upgradable)
                     {
-                        var revisionUpgrade = _qualityUpgradableSpecification.IsRevisionUpgrade(file.Quality, subject.ParsedEpisodeInfo.Quality);
-
-                        if (revisionUpgrade)
-                        {
-                            _logger.Debug("New quality is a better revision for existing quality, skipping delay");
-                            return Decision.Accept();
-                        }
+                        _logger.Debug("New quality is a better revision for existing quality, skipping delay");
+                        return Decision.Accept();
                     }
                 }
             }
@@ -74,8 +71,9 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             //If quality meets or exceeds the best allowed quality in the profile accept it immediately
             var bestQualityInProfile = new QualityModel(profile.LastAllowedQuality());
             var isBestInProfile = comparer.Compare(subject.ParsedEpisodeInfo.Quality, bestQualityInProfile) >= 0;
+            var isBestInProfileLanguage = comparerLanguage.Compare(subject.ParsedEpisodeInfo.Language, profile.LastAllowedLanguage()) >= 0;
 
-            if (isBestInProfile && isPreferredProtocol)
+            if (isBestInProfile && (isBestInProfileLanguage || !profile.LanguageOverQuality) && isPreferredProtocol)
             {
                 _logger.Debug("Quality is highest in profile for preferred protocol, will not delay");
                 return Decision.Accept();

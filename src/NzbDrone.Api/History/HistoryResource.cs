@@ -5,6 +5,7 @@ using NzbDrone.Api.REST;
 using NzbDrone.Api.Series;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Qualities;
+using NzbDrone.Core.Languages;
 
 
 namespace NzbDrone.Api.History
@@ -20,6 +21,7 @@ namespace NzbDrone.Api.History
         public string Indexer { get; set; }
         public string ReleaseGroup { get; set; }
         public string DownloadId { get; set; }
+        public Language Language { get; set; }
 
         public HistoryEventType EventType { get; set; }
 

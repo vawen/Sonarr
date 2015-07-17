@@ -26,11 +26,11 @@ module.exports = Backgrid.CellEditor.extend({
             self.schema = profileSchemaCollection.first();
 
 			var selected = _.find(self.schema.get('languages'), function(model) {
-				return model.id === self.model.get(self.column.get('name')).id;
+				return model.language.id === self.model.get(self.column.get('name')).id;
 			});
 
 			if (selected) {
-				selected.selected = true;
+				selected.language.selected = true;
 			}
 
 			self.templateFunction = Marionette.TemplateCache.get(templateName);
@@ -48,17 +48,18 @@ module.exports = Backgrid.CellEditor.extend({
         var selected = parseInt(this.$el.val(), 10);
 
         var profileItem = _.find(this.schema.get('languages'), function(model) {
-            return model.id === selected;
+            return model.language.id === selected;
         });
 
-		profileItem.revision = {
+		var newLanguage = profileItem.language;
+		newLanguage.revision = {
                 version : 1,
                 real    : 0
             };
 
 		var colName = column.get('name');
 		
-        model.set(column.get('name'), profileItem);
+        model.set(column.get('name'), newLanguage);
         model.save();
 
         model.trigger('backgrid:edited', model, column, new Backgrid.Command(e));

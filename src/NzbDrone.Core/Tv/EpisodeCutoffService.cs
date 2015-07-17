@@ -4,6 +4,7 @@ using NLog;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Qualities;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Tv
 {
@@ -28,6 +29,7 @@ namespace NzbDrone.Core.Tv
         public PagingSpec<Episode> EpisodesWhereCutoffUnmet(PagingSpec<Episode> pagingSpec)
         {
             var qualitiesBelowCutoff = new List<QualitiesBelowCutoff>();
+            var languagesBelowCutoff = new List<LanguagesBelowCutoff>();
             var profiles = _profileService.All();
             
             //Get all items less than the cutoff
@@ -35,14 +37,21 @@ namespace NzbDrone.Core.Tv
             {
                 var cutoffIndex = profile.Items.FindIndex(v => v.Quality == profile.Cutoff);
                 var belowCutoff = profile.Items.Take(cutoffIndex).ToList();
+                var languageCutoffIndex = profile.Languages.FindIndex(v => v.Language == profile.CutoffLanguage);
+                var belowLanguageCutoff = profile.Languages.Take(languageCutoffIndex).ToList();
 
                 if (belowCutoff.Any())
                 {
                     qualitiesBelowCutoff.Add(new QualitiesBelowCutoff(profile.Id, belowCutoff.Select(i => i.Quality.Id)));
                 }
+
+                if (belowLanguageCutoff.Any() && profile.AllowLanguageUpgrade)
+                {
+                    languagesBelowCutoff.Add(new LanguagesBelowCutoff(profile.Id, belowLanguageCutoff.Select(l => l.Language.Id)));
+                }
             }
 
-            return _episodeRepository.EpisodesWhereCutoffUnmet(pagingSpec, qualitiesBelowCutoff, false);
+            return _episodeRepository.EpisodesWhereCutoffUnmet(pagingSpec, qualitiesBelowCutoff, languagesBelowCutoff, false);
         }
     }
 }

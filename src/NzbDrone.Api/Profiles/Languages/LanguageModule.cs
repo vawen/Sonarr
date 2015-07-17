@@ -34,7 +34,7 @@ namespace NzbDrone.Api.Profiles.Languages
                         Id = l.Id,
                         Name = l.Name
                     })
-                    .OrderBy(l => l.Name)
+                    .OrderByDescending(l => l.Name)
                     .ToList();
         }
     }

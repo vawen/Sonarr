@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using FluentAssertions;
 using Marr.Data;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
@@ -8,6 +9,7 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
+using System.Collections.Generic;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
@@ -20,6 +22,15 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [SetUp]
         public void Setup()
         {
+            Profile _profile = new LazyLoaded<Profile>(new Profile());
+            _profile.Languages = new List<ProfileLanguageItem>();
+            _profile.Languages.Add(new ProfileLanguageItem { Allowed = true, Language = Language.English });
+            _profile.Languages.Add(new ProfileLanguageItem { Allowed = true, Language = Language.Spanish });
+            _profile.Languages.Add(new ProfileLanguageItem { Allowed = false, Language = Language.French });
+            _profile.CutoffLanguage = Language.Spanish;
+            _profile.LanguageOverQuality = false;
+            _profile.AllowLanguageUpgrade = false;
+
             _remoteEpisode = new RemoteEpisode
             {
                 ParsedEpisodeInfo = new ParsedEpisodeInfo
@@ -28,10 +39,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 },
                 Series = new Series
                          {
-                             Profile = new LazyLoaded<Profile>(new Profile
-                                                               {
-                                                                   Language = Language.English
-                                                               })
+                             Profile = _profile
                          }
             };
         }
@@ -40,6 +48,17 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             _remoteEpisode.ParsedEpisodeInfo.Language = Language.English;
         }
+
+        private void WithSpanishRelease()
+        {
+            _remoteEpisode.ParsedEpisodeInfo.Language = Language.Spanish;
+        }
+
+        private void WithFrenchRelease()
+        {
+            _remoteEpisode.ParsedEpisodeInfo.Language = Language.French;
+        }
+
 
         private void WithGermanRelease()
         {
@@ -61,5 +80,23 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             Mocker.Resolve<LanguageSpecification>().IsSatisfiedBy(_remoteEpisode, null).Accepted.Should().BeFalse();
         }
+
+        [Test]
+        public void should_return_false_if_language_is_french()
+        {
+            WithFrenchRelease();
+
+            Mocker.Resolve<LanguageSpecification>().IsSatisfiedBy(_remoteEpisode, null).Accepted.Should().BeFalse();
+        }
+
+
+        [Test]
+        public void should_return_true_if_language_is_spanish()
+        {
+            WithSpanishRelease();
+
+            Mocker.Resolve<LanguageSpecification>().IsSatisfiedBy(_remoteEpisode, null).Accepted.Should().BeTrue();
+        }
+
     }
 }
