@@ -79,7 +79,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
                     episodeFile.SeasonNumber = localEpisode.SeasonNumber;
                     episodeFile.Episodes = localEpisode.Episodes;
                     episodeFile.ReleaseGroup = localEpisode.ParsedEpisodeInfo.ReleaseGroup;
-                    episodeFile.Language = localEpisode.ParsedEpisodeInfo.Language;
+                    episodeFile.Language = localEpisode.Language;
 
                     if (newDownload)
                     {

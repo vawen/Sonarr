@@ -10,6 +10,8 @@ using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Languages;
+using System.Collections.Generic;
 
 namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
 {
@@ -18,21 +20,60 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
     {
         private Series _series;
         private LocalEpisode _localEpisode;
+        private Series _seriesLanguage;
+        private LocalEpisode _localEpisodeLanguage;
 
         [SetUp]
         public void Setup()
         {
+
+            var _languages = new List<ProfileLanguageItem>();
+            _languages.Add(new ProfileLanguageItem { Language = Language.English, Allowed = true });
+            _languages.Add(new ProfileLanguageItem { Language = Language.Spanish, Allowed = true });
+            _languages.Add(new ProfileLanguageItem { Language = Language.French, Allowed = true });
+
+
             _series = Builder<Series>.CreateNew()
                                      .With(s => s.SeriesType = SeriesTypes.Standard)
-                                     .With(e => e.Profile = new Profile { Items = Qualities.QualityFixture.GetDefaultQualities() })
+                                     .With(e => e.Profile = new Profile 
+                                        { 
+                                            Items = Qualities.QualityFixture.GetDefaultQualities(),
+                                            Languages = _languages,
+                                            CutoffLanguage = Language.Spanish,
+                                            AllowLanguageUpgrade = false,
+                                            LanguageOverQuality = false,
+                                        })
                                      .Build();
+
+            _seriesLanguage = Builder<Series>.CreateNew()
+                                     .With(s => s.SeriesType = SeriesTypes.Standard)
+                                     .With(e => e.Profile = new Profile
+                                     {
+                                         Items = Qualities.QualityFixture.GetDefaultQualities(),
+                                         Languages = _languages,
+                                         CutoffLanguage = Language.Spanish,
+                                         AllowLanguageUpgrade = true,
+                                         LanguageOverQuality = true,
+                                     })
+                                     .Build();
+
 
             _localEpisode = new LocalEpisode
                                 {
                                     Path = @"C:\Test\30 Rock\30.rock.s01e01.avi",
                                     Quality = new QualityModel(Quality.HDTV720p, new Revision(version: 1)),
+                                    Language = Language.Spanish,
                                     Series = _series
                                 };
+
+            _localEpisodeLanguage = new LocalEpisode
+                                        {
+                                            Path = @"C:\Test\30 Rock\30.rock.s01e01.avi",
+                                            Quality = new QualityModel(Quality.HDTV720p, new Revision(version: 1)),
+                                            Language = Language.Spanish,
+                                            Series = _seriesLanguage
+                                        };
+
         }
 
         [Test]
@@ -70,13 +111,33 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
                                                      .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
                                                                                 new EpisodeFile
                                                                                 {
-                                                                                    Quality = new QualityModel(Quality.SDTV, new Revision(version: 1))
+                                                                                    Quality = new QualityModel(Quality.SDTV, new Revision(version: 1)),
+                                                                                    Language = Language.Spanish
                                                                                 }))
                                                      .Build()
                                                      .ToList();
 
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeTrue();
         }
+
+        [Test]
+        public void should_return_true_if_language_upgrade_for_existing_episodeFile()
+        {
+            _localEpisodeLanguage.Episodes = Builder<Episode>.CreateListOfSize(1)
+                                                     .All()
+                                                     .With(e => e.EpisodeFileId = 1)
+                                                     .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
+                                                                                new EpisodeFile
+                                                                                {
+                                                                                    Quality = new QualityModel(Quality.Bluray1080p, new Revision(version: 1)),
+                                                                                    Language = Language.English
+                                                                                }))
+                                                     .Build()
+                                                     .ToList();
+
+            Subject.IsSatisfiedBy(_localEpisodeLanguage).Accepted.Should().BeTrue();
+        }
+
 
         [Test]
         public void should_return_true_if_upgrade_for_existing_episodeFile_for_multi_episodes()
@@ -96,6 +157,25 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
         }
 
         [Test]
+        public void should_return_true_if_language_upgrade_for_existing_episodeFile_for_multi_episodes()
+        {
+            _localEpisodeLanguage.Episodes = Builder<Episode>.CreateListOfSize(2)
+                                                     .All()
+                                                     .With(e => e.EpisodeFileId = 1)
+                                                     .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
+                                                                                new EpisodeFile
+                                                                                {
+                                                                                    Quality = new QualityModel(Quality.Bluray1080p, new Revision(version: 1)),
+                                                                                    Language = Language.English
+                                                                                }))
+                                                     .Build()
+                                                     .ToList();
+
+            Subject.IsSatisfiedBy(_localEpisodeLanguage).Accepted.Should().BeTrue();
+        }
+
+
+        [Test]
         public void should_return_false_if_not_an_upgrade_for_existing_episodeFile()
         {
             _localEpisode.Episodes = Builder<Episode>.CreateListOfSize(1)
@@ -110,6 +190,24 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
                                                      .ToList();
 
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_return_false_if_not_a_language_upgrade_for_existing_episodeFile()
+        {
+            _localEpisodeLanguage.Episodes = Builder<Episode>.CreateListOfSize(1)
+                                                     .All()
+                                                     .With(e => e.EpisodeFileId = 1)
+                                                     .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
+                                                                                new EpisodeFile
+                                                                                {
+                                                                                    Quality = new QualityModel(Quality.SDTV, new Revision(version: 1)),
+                                                                                    Language = Language.French
+                                                                                }))
+                                                     .Build()
+                                                     .ToList();
+
+            Subject.IsSatisfiedBy(_localEpisodeLanguage).Accepted.Should().BeFalse();
         }
 
         [Test]
@@ -128,6 +226,25 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
 
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeFalse();
         }
+
+        [Test]
+        public void should_return_false_if_not_a_language_upgrade_for_existing_episodeFile_for_multi_episodes()
+        {
+            _localEpisodeLanguage.Episodes = Builder<Episode>.CreateListOfSize(2)
+                                                     .All()
+                                                     .With(e => e.EpisodeFileId = 1)
+                                                     .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
+                                                                                new EpisodeFile
+                                                                                {
+                                                                                    Quality = new QualityModel(Quality.SDTV, new Revision(version: 1)),
+                                                                                    Language = Language.French
+                                                                                }))
+                                                     .Build()
+                                                     .ToList();
+
+            Subject.IsSatisfiedBy(_localEpisodeLanguage).Accepted.Should().BeFalse();
+        }
+
 
         [Test]
         public void should_return_false_if_not_an_upgrade_for_one_existing_episodeFile_for_multi_episode()
@@ -151,6 +268,32 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
                                                      .ToList();
 
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_return_false_if_not_a_language_upgrade_for_one_existing_episodeFile_for_multi_episode()
+        {
+            _localEpisodeLanguage.Episodes = Builder<Episode>.CreateListOfSize(2)
+                                                     .TheFirst(1)
+                                                     .With(e => e.EpisodeFileId = 1)
+                                                     .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
+                                                                                new EpisodeFile
+                                                                                {
+                                                                                    Quality = new QualityModel(Quality.SDTV, new Revision(version: 1)),
+                                                                                    Language = Language.French
+                                                                                }))
+                                                     .TheNext(1)
+                                                     .With(e => e.EpisodeFileId = 2)
+                                                     .With(e => e.EpisodeFile = new LazyLoaded<EpisodeFile>(
+                                                                                new EpisodeFile
+                                                                                {
+                                                                                    Quality = new QualityModel(Quality.SDTV, new Revision(version: 1)),
+                                                                                    Language = Language.English
+                                                                                }))
+                                                     .Build()
+                                                     .ToList();
+
+            Subject.IsSatisfiedBy(_localEpisodeLanguage).Accepted.Should().BeFalse();
         }
     }
 }

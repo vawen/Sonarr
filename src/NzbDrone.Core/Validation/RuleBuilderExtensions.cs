@@ -2,7 +2,6 @@
 using FluentValidation;
 using FluentValidation.Validators;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Validation
 {
@@ -57,11 +56,6 @@ namespace NzbDrone.Core.Validation
 
                                   return true;
                               });
-        }
-
-        public static IRuleBuilderOptions<T, Language> ValidLanguage<T>(this IRuleBuilder<T, Language> ruleBuilder)
-        {
-            return ruleBuilder.SetValidator(new LanguageValidator());
         }
 
         public static IRuleBuilderOptions<T, TProp> AsWarning<T, TProp>(this IRuleBuilderOptions<T, TProp> ruleBuilder)

@@ -8,21 +8,61 @@
 
 <hr>
 
-<div class="form-group">
-    <label class="col-sm-3 control-label">Language</label>
+<div class="form-group advanced-setting">
+    <label class="col-sm-3 control-label">Allow language upgrade</label>
 
     <div class="col-sm-5">
-        <select class="form-control" name="language.id" validation-name="language2">
-            {{#each languages}}
-                {{#unless_eq nameLower compare="unknown"}}
-                    <option value={{id}}>{{name}}</option>
-                {{/unless_eq}}
-            {{/each}}
+		<div class="input-group">
+			<label class="checkbox toggle well">
+				<input type="checkbox" name="allowLanguageUpgrade" class="x-language-upgrade"/>
+				<p>
+					<span>Yes</span>
+					<span>No</span>
+				</p>
+				<div class="btn btn-primary slide-button"/>
+			</label>
+			<span class="help-inline-checkbox">
+				<i class="icon-sonarr-form-info" title="Sonarr will not download new languages if set to no"/>
+			</span>
+		</div>
+    </div>
+</div>
+
+<div class="form-group advanced-setting">
+    <label class="col-sm-3 control-label">Language over quality</label>
+
+    <div class="col-sm-5">
+		<div class="input-group">
+			<label class="checkbox toggle well">
+				<input type="checkbox" name="languageOverQuality" class="x-language-over-quality"/>
+				<p>
+					<span>Yes</span>
+					<span>No</span>
+				</p>
+				<div class="btn btn-primary slide-button"/>
+			</label>
+			<span class="help-inline-checkbox">
+				<i class="icon-sonarr-form-info" title="Sonarr will not priorize language if set to no"/>
+			</span>			
+		</div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label class="col-sm-3 control-label">Language cutoff</label>
+
+    <div class="col-sm-5">
+        <select class="form-control x-languageCutoff" name="cutoffLanguage.id" validation-name="cutoffLanguage">
+            {{#eachReverse languages}}
+                {{#if allowed}}
+                    <option value={{language.id}}>{{language.name}}</option>
+                {{/if}}
+            {{/eachReverse}}
         </select>
     </div>
 
     <div class="col-sm-1 help-inline">
-        <i class="icon-sonarr-form-info" title="Series assigned this profile will be look for episodes with the selected language"/>
+        <i class="icon-sonarr-form-info" title="Once this language is reached Sonarr will no longer download episodes with other languages"/>
     </div>
 </div>
 

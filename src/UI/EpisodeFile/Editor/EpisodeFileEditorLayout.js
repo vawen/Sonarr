@@ -148,7 +148,7 @@ module.exports = Marionette.Layout.extend({
             var profile = profileSchemaCollection.first();
 
             self.qualitySelectView = new QualitySelectView({ qualities: _.map(profile.get('items'), 'quality') });
-			self.languageSelectView = new LanguageSelectView({ languages: profile.get('languages') });
+			self.languageSelectView = new LanguageSelectView({ languages: _.map(profile.get('languages'), 'language') });
             self.listenTo(self.qualitySelectView, 'seasonedit:quality', self._changeQuality);
 			self.listenTo(self.languageSelectView, 'seasonedit:language', self._changeLanguage);
 

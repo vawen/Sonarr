@@ -1,11 +1,13 @@
 ﻿using FizzWare.NBuilder;
 using NUnit.Framework;
+using System.Linq;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Test.Datastore
 {
@@ -20,7 +22,9 @@ namespace NzbDrone.Core.Test.Datastore
                 {
                     Name = "Test",
                     Cutoff = Quality.WEBDL720p,
-                    Items = Qualities.QualityFixture.GetDefaultQualities()
+                    Items = Qualities.QualityFixture.GetDefaultQualities(),
+                    Languages = Language.All.OrderByDescending(l => l.Name).Select(l => new ProfileLanguageItem { Language = l, Allowed = l == Language.English}).ToList(),
+                    CutoffLanguage = Language.English
                 };
 
             

@@ -57,14 +57,14 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
 
             foreach (var episode in subject.Episodes)
             {
-                var bestQualityInHistory = _historyService.GetBestQualityInHistory(subject.Series.Profile, episode.Id);
-                if (bestQualityInHistory != null)
+                var bestInHistory = _historyService.GetBestInHistory(subject.Series.Profile, episode.Id);
+                if (bestInHistory != null)
                 {
-                    _logger.Debug("Comparing history quality with report. History is {0}", bestQualityInHistory);
+                    _logger.Debug("Comparing history quality with report. History is {0} - {1}", bestInHistory.Quality, bestInHistory.Language);
 
-                    if (!_qualityUpgradableSpecification.IsUpgradable(subject.Series.Profile, bestQualityInHistory, subject.ParsedEpisodeInfo.Quality))
+                    if (!_qualityUpgradableSpecification.IsUpgradable(subject.Series.Profile, bestInHistory.Quality, bestInHistory.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language))
                     {
-                        return Decision.Reject("Existing file in history is of equal or higher quality: {0}", bestQualityInHistory);
+                        return Decision.Reject("Existing file in history is of equal or higher quality: {0} - {1}", bestInHistory.Quality, bestInHistory.Language);
                     }
                 }
             }

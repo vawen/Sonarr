@@ -18,6 +18,7 @@ using NzbDrone.Core.Profiles.Delay;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
 {
@@ -53,6 +54,12 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
 
             _profile.Cutoff = Quality.WEBDL720p;
 
+            _profile.CutoffLanguage = Language.Spanish;
+            _profile.Languages = new List<ProfileLanguageItem>();
+            _profile.Languages.Add(new ProfileLanguageItem {Allowed = true, Language = Language.English });
+            _profile.Languages.Add(new ProfileLanguageItem {Allowed = true, Language = Language.Spanish });
+            _profile.Languages.Add(new ProfileLanguageItem {Allowed = true, Language = Language.French });
+
             _remoteEpisode.ParsedEpisodeInfo = new ParsedEpisodeInfo();
             _remoteEpisode.Release = new ReleaseInfo();
             _remoteEpisode.Release.DownloadProtocol = DownloadProtocol.Usenet;
@@ -69,20 +76,21 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
                   .Returns(new List<RemoteEpisode>());
         }
 
-        private void GivenExistingFile(QualityModel quality)
+        private void GivenExistingFile(QualityModel quality, Language language)
         {
             _remoteEpisode.Episodes.First().EpisodeFileId = 1;
 
             _remoteEpisode.Episodes.First().EpisodeFile = new LazyLoaded<EpisodeFile>(new EpisodeFile
                                                                                  {
-                                                                                     Quality = quality
+                                                                                     Quality = quality,
+                                                                                     Language = language
                                                                                  });
         }
 
         private void GivenUpgradeForExistingFile()
         {
             Mocker.GetMock<IQualityUpgradableSpecification>()
-                  .Setup(s => s.IsUpgradable(It.IsAny<Profile>(), It.IsAny<QualityModel>(), It.IsAny<QualityModel>()))
+                  .Setup(s => s.IsUpgradable(It.IsAny<Profile>(), It.IsAny<QualityModel>(), It.IsAny<Language>(), It.IsAny<QualityModel>(), It.IsAny<Language>()))
                   .Returns(true);
         }
 
@@ -136,7 +144,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
             _remoteEpisode.ParsedEpisodeInfo.Quality = new QualityModel(Quality.HDTV720p, new Revision(version: 2));
             _remoteEpisode.Release.PublishDate = DateTime.UtcNow;
 
-            GivenExistingFile(new QualityModel(Quality.HDTV720p));
+            GivenExistingFile(new QualityModel(Quality.HDTV720p), Language.English);
             GivenUpgradeForExistingFile();
 
             Mocker.GetMock<IQualityUpgradableSpecification>()
@@ -154,7 +162,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
             _remoteEpisode.ParsedEpisodeInfo.Quality = new QualityModel(Quality.HDTV720p, new Revision(real: 1));
             _remoteEpisode.Release.PublishDate = DateTime.UtcNow;
 
-            GivenExistingFile(new QualityModel(Quality.HDTV720p));
+            GivenExistingFile(new QualityModel(Quality.HDTV720p), Language.English);
             GivenUpgradeForExistingFile();
 
             Mocker.GetMock<IQualityUpgradableSpecification>()
@@ -172,7 +180,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
             _remoteEpisode.ParsedEpisodeInfo.Quality = new QualityModel(Quality.HDTV720p, new Revision(version: 2));
             _remoteEpisode.Release.PublishDate = DateTime.UtcNow;
 
-            GivenExistingFile(new QualityModel(Quality.SDTV));
+            GivenExistingFile(new QualityModel(Quality.SDTV), Language.English);
 
             _delayProfile.UsenetDelay = 720;
 

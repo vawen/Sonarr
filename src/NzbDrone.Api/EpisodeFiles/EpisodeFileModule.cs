@@ -89,7 +89,7 @@ namespace NzbDrone.Api.EpisodeFiles
             var resource = episodeFile.InjectTo<EpisodeFileResource>();
             resource.Path = Path.Combine(series.Path, episodeFile.RelativePath);
 
-            resource.QualityCutoffNotMet = _qualityUpgradableSpecification.CutoffNotMet(series.Profile.Value, episodeFile.Quality);
+            resource.QualityCutoffNotMet = _qualityUpgradableSpecification.CutoffNotMet(series.Profile.Value, episodeFile.Quality, episodeFile.Language);
 
             return resource;
         }
