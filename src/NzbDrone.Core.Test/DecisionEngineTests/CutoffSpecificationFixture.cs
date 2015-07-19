@@ -128,7 +128,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Subject.CutoffNotMet(_profile,
             new QualityModel(Quality.HDTV720p, new Revision(version: 2)),
             Language.English,
-            new QualityModel(Quality.Bluray1080p, new Revision(version: 2))).Should().BeTrue();
+            new QualityModel(Quality.Bluray1080p, new Revision(version: 2))).Should().BeFalse();
         }
 
         [Test]
