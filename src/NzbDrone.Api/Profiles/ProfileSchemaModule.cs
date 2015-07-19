@@ -30,11 +30,9 @@ namespace NzbDrone.Api.Profiles
             var profile = new Profile();
             profile.Cutoff = Quality.Unknown;
             profile.Items = items;
-            profile.Languages = Language.All
-                                .OrderByDescending(l => l.Name)
-                                .Select(l => new ProfileLanguageItem { Allowed = false, Language = l })
-                                .ToList();
-
+            profile.Languages = Language.All.OrderByDescending(l => l.Name)
+                                            .Select(l => new ProfileLanguageItem { Allowed = false, Language = l })
+                                            .ToList();
 
             return new List<ProfileResource> { profile.InjectTo<ProfileResource>() };
         }

@@ -31,26 +31,23 @@ namespace NzbDrone.Core.DecisionEngine
                                 {
                                     var downloadDecisions = d.ToList();
                                     var series = downloadDecisions.First().RemoteEpisode.Series;
+                                    IOrderedEnumerable<DownloadDecision> result;
+
                                     if (series.Profile.Value.LanguageOverQuality)
-                                         return downloadDecisions
-                                            .OrderByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Language, new LanguageComparer(series.Profile))
-                                            .ThenByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Quality, new QualityModelComparer(series.Profile))
-                                            .ThenBy(c => c.RemoteEpisode.Episodes.Select(e => e.EpisodeNumber).MinOrDefault())
-                                            .ThenBy(c => PrioritizeDownloadProtocol(series, c.RemoteEpisode.Release.DownloadProtocol))
-                                            .ThenByDescending(c => c.RemoteEpisode.Episodes.Count)
-                                            .ThenBy(c => c.RemoteEpisode.Release.Size.Round(200.Megabytes()) / Math.Max(1, c.RemoteEpisode.Episodes.Count))
-                                            .ThenByDescending(c => TorrentInfo.GetSeeders(c.RemoteEpisode.Release))
-                                            .ThenBy(c => c.RemoteEpisode.Release.Age);
+                                         result = downloadDecisions
+                                             .OrderByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Language, new LanguageComparer(series.Profile))
+                                             .ThenByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Quality, new QualityModelComparer(series.Profile));
                                      else
-                                        return downloadDecisions
+                                        result = downloadDecisions
                                             .OrderByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Quality, new QualityModelComparer(series.Profile))
-                                            .ThenByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Language, new LanguageComparer(series.Profile))
-                                            .ThenBy(c => c.RemoteEpisode.Episodes.Select(e => e.EpisodeNumber).MinOrDefault())
-                                            .ThenBy(c => PrioritizeDownloadProtocol(series, c.RemoteEpisode.Release.DownloadProtocol))
-                                            .ThenByDescending(c => c.RemoteEpisode.Episodes.Count)
-                                            .ThenBy(c => c.RemoteEpisode.Release.Size.Round(200.Megabytes()) / Math.Max(1, c.RemoteEpisode.Episodes.Count))
-                                            .ThenByDescending(c => TorrentInfo.GetSeeders(c.RemoteEpisode.Release))
-                                            .ThenBy(c => c.RemoteEpisode.Release.Age);
+                                            .ThenByDescending(c => c.RemoteEpisode.ParsedEpisodeInfo.Language, new LanguageComparer(series.Profile));
+
+                                    return result.ThenBy(c => c.RemoteEpisode.Episodes.Select(e => e.EpisodeNumber).MinOrDefault())
+                                                 .ThenBy(c => PrioritizeDownloadProtocol(series, c.RemoteEpisode.Release.DownloadProtocol))
+                                                 .ThenByDescending(c => c.RemoteEpisode.Episodes.Count)
+                                                 .ThenBy(c => c.RemoteEpisode.Release.Size.Round(200.Megabytes()) / Math.Max(1, c.RemoteEpisode.Episodes.Count))
+                                                 .ThenByDescending(c => TorrentInfo.GetSeeders(c.RemoteEpisode.Release))
+                                                 .ThenBy(c => c.RemoteEpisode.Release.Age);
                                 })
                             .SelectMany(c => c)
                             .Union(decisions.Where(c => c.RemoteEpisode.Series == null))
