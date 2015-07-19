@@ -20,21 +20,21 @@ namespace NzbDrone.Api.EpisodeFiles
         private readonly IMediaFileService _mediaFileService;
         private readonly IRecycleBinProvider _recycleBinProvider;
         private readonly ISeriesService _seriesService;
-        private readonly IUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly IUpgradableSpecification _upgradableSpecification;
         private readonly Logger _logger;
 
         public EpisodeModule(IBroadcastSignalRMessage signalRBroadcaster,
                              IMediaFileService mediaFileService,
                              IRecycleBinProvider recycleBinProvider,
                              ISeriesService seriesService,
-                             IUpgradableSpecification qualityUpgradableSpecification,
+                             IUpgradableSpecification upgradableSpecification,
                              Logger logger)
             : base(signalRBroadcaster)
         {
             _mediaFileService = mediaFileService;
             _recycleBinProvider = recycleBinProvider;
             _seriesService = seriesService;
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = upgradableSpecification;
             _logger = logger;
             GetResourceById = GetEpisodeFile;
             GetResourceAll = GetEpisodeFiles;
@@ -89,7 +89,7 @@ namespace NzbDrone.Api.EpisodeFiles
             var resource = episodeFile.InjectTo<EpisodeFileResource>();
             resource.Path = Path.Combine(series.Path, episodeFile.RelativePath);
 
-            resource.QualityCutoffNotMet = _qualityUpgradableSpecification.CutoffNotMet(series.Profile.Value, episodeFile.Quality, episodeFile.Language);
+            resource.QualityCutoffNotMet = _upgradableSpecification.CutoffNotMet(series.Profile.Value, episodeFile.Quality, episodeFile.Language);
 
             return resource;
         }

@@ -7,12 +7,12 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 {
     public class UpgradeDiskSpecification : IDecisionEngineSpecification
     {
-        private readonly UpgradableSpecification _qualityUpgradableSpecification;
+        private readonly UpgradableSpecification _upgradableSpecification;
         private readonly Logger _logger;
 
-        public UpgradeDiskSpecification(UpgradableSpecification qualityUpgradableSpecification, Logger logger)
+        public UpgradeDiskSpecification(UpgradableSpecification upgradableSpecification, Logger logger)
         {
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = upgradableSpecification;
             _logger = logger;
         }
 
@@ -24,7 +24,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             {
                 _logger.Debug("Comparing file quality with report. Existing file is {0} - {1}", file.Quality, file.Language);
 
-                if (!_qualityUpgradableSpecification.IsUpgradable(subject.Series.Profile, file.Quality, file.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language))
+                if (!_upgradableSpecification.IsUpgradable(subject.Series.Profile, file.Quality, file.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language))
                 {
                     return Decision.Reject("Quality for existing file on disk is of equal or higher preference: {0} - {1}", file.Quality, file.Language);
                 }

@@ -11,17 +11,17 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
     public class HistorySpecification : IDecisionEngineSpecification
     {
         private readonly IHistoryService _historyService;
-        private readonly UpgradableSpecification _qualityUpgradableSpecification;
+        private readonly UpgradableSpecification _upgradableSpecification;
         private readonly IProvideDownloadClient _downloadClientProvider;
         private readonly Logger _logger;
 
         public HistorySpecification(IHistoryService historyService,
-                                           UpgradableSpecification qualityUpgradableSpecification,
+                                           UpgradableSpecification UpgradableSpecification,
                                            IProvideDownloadClient downloadClientProvider,
                                            Logger logger)
         {
             _historyService = historyService;
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = UpgradableSpecification;
             _downloadClientProvider = downloadClientProvider;
             _logger = logger;
         }
@@ -62,7 +62,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
                 {
                     _logger.Debug("Comparing history quality with report. History is {0} - {1}", bestInHistory.Quality, bestInHistory.Language);
 
-                    if (!_qualityUpgradableSpecification.IsUpgradable(subject.Series.Profile, bestInHistory.Quality, bestInHistory.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language))
+                    if (!_upgradableSpecification.IsUpgradable(subject.Series.Profile, bestInHistory.Quality, bestInHistory.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language))
                     {
                         return Decision.Reject("Existing file in history is of equal or higher quality: {0} - {1}", bestInHistory.Quality, bestInHistory.Language);
                     }

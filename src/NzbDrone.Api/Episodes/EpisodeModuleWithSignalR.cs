@@ -21,31 +21,31 @@ namespace NzbDrone.Api.Episodes
     {
         protected readonly IEpisodeService _episodeService;
         protected readonly ISeriesService _seriesService;
-        protected readonly IUpgradableSpecification _qualityUpgradableSpecification;
+        protected readonly IUpgradableSpecification _upgradableSpecification;
 
         protected EpisodeModuleWithSignalR(IEpisodeService episodeService,
                                            ISeriesService seriesService,
-                                           IUpgradableSpecification qualityUpgradableSpecification,
+                                           IUpgradableSpecification upgradableSpecification,
                                            IBroadcastSignalRMessage signalRBroadcaster)
             : base(signalRBroadcaster)
         {
             _episodeService = episodeService;
             _seriesService = seriesService;
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = upgradableSpecification;
 
             GetResourceById = GetEpisode;
         }
 
         protected EpisodeModuleWithSignalR(IEpisodeService episodeService,
                                            ISeriesService seriesService,
-                                           IUpgradableSpecification qualityUpgradableSpecification,
+                                           IUpgradableSpecification upgradableSpecification,
                                            IBroadcastSignalRMessage signalRBroadcaster,
                                            String resource)
             : base(signalRBroadcaster, resource)
         {
             _episodeService = episodeService;
             _seriesService = seriesService;
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = upgradableSpecification;
 
             GetResourceById = GetEpisode;
         }
@@ -68,7 +68,7 @@ namespace NzbDrone.Api.Episodes
                 if (episode.EpisodeFile.IsLoaded && episode.EpisodeFile.Value != null)
                 {
                     resource.EpisodeFile.Path = Path.Combine(episode.Series.Path, episode.EpisodeFile.Value.RelativePath);
-                    resource.EpisodeFile.QualityCutoffNotMet = _qualityUpgradableSpecification.CutoffNotMet(episode.Series.Profile.Value, episode.EpisodeFile.Value.Quality, episode.EpisodeFile.Value.Language);
+                    resource.EpisodeFile.QualityCutoffNotMet = _upgradableSpecification.CutoffNotMet(episode.Series.Profile.Value, episode.EpisodeFile.Value.Quality, episode.EpisodeFile.Value.Language);
                 }
             }
 

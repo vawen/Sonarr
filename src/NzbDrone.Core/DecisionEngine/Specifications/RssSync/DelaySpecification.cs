@@ -12,17 +12,17 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
     public class DelaySpecification : IDecisionEngineSpecification
     {
         private readonly IPendingReleaseService _pendingReleaseService;
-        private readonly IUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly IUpgradableSpecification _upgradableSpecification;
         private readonly IDelayProfileService _delayProfileService;
         private readonly Logger _logger;
 
         public DelaySpecification(IPendingReleaseService pendingReleaseService,
-                                  IUpgradableSpecification qualityUpgradableSpecification,
+                                  IUpgradableSpecification UpgradableSpecification,
                                   IDelayProfileService delayProfileService,
                                   Logger logger)
         {
             _pendingReleaseService = pendingReleaseService;
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = UpgradableSpecification;
             _delayProfileService = delayProfileService;
             _logger = logger;
         }
@@ -58,7 +58,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             {
                 foreach (var file in subject.Episodes.Where(c => c.EpisodeFileId != 0).Select(c => c.EpisodeFile.Value))
                 {
-                    var upgradable = _qualityUpgradableSpecification.IsUpgradable(profile, file.Quality, file.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language);
+                    var upgradable = _upgradableSpecification.IsUpgradable(profile, file.Quality, file.Language, subject.ParsedEpisodeInfo.Quality, subject.ParsedEpisodeInfo.Language);
 
                     if (upgradable)
                     {
