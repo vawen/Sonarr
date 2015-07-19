@@ -5,18 +5,18 @@ using NzbDrone.Core.Qualities;
 
 namespace NzbDrone.Core.DecisionEngine
 {
-    public interface IQualityUpgradableSpecification
+    public interface IUpgradableSpecification
     {
         bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null, Language newLanguage = null);
         bool CutoffNotMet(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null);
         bool IsRevisionUpgrade(QualityModel currentQuality, QualityModel newQuality);
     }
 
-    public class QualityUpgradableSpecification : IQualityUpgradableSpecification
+    public class UpgradableSpecification : IUpgradableSpecification
     {
         private readonly Logger _logger;
 
-        public QualityUpgradableSpecification(Logger logger)
+        public UpgradableSpecification(Logger logger)
         {
             _logger = logger;
         }

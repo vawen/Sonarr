@@ -9,10 +9,10 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 {
     public class AnimeVersionUpgradeSpecification : IDecisionEngineSpecification
     {
-        private readonly QualityUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly UpgradableSpecification _qualityUpgradableSpecification;
         private readonly Logger _logger;
 
-        public AnimeVersionUpgradeSpecification(QualityUpgradableSpecification qualityUpgradableSpecification, Logger logger)
+        public AnimeVersionUpgradeSpecification(UpgradableSpecification qualityUpgradableSpecification, Logger logger)
         {
             _qualityUpgradableSpecification = qualityUpgradableSpecification;
             _logger = logger;

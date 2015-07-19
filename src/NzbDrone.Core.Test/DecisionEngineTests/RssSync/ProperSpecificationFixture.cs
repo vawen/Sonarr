@@ -29,7 +29,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
         [SetUp]
         public void Setup()
         {
-            Mocker.Resolve<QualityUpgradableSpecification>();
+            Mocker.Resolve<UpgradableSpecification>();
 
             _firstFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p, new Revision(version: 1)), DateAdded = DateTime.Now };
             _secondFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p, new Revision(version: 1)), DateAdded = DateTime.Now };

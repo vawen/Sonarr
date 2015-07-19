@@ -10,7 +10,7 @@ namespace NzbDrone.Api.Episodes
     {
         public EpisodeModule(ISeriesService seriesService,
                              IEpisodeService episodeService,
-                             IQualityUpgradableSpecification qualityUpgradableSpecification,
+                             IUpgradableSpecification qualityUpgradableSpecification,
                              IBroadcastSignalRMessage signalRBroadcaster)
             : base(episodeService, seriesService, qualityUpgradableSpecification, signalRBroadcaster)
         {

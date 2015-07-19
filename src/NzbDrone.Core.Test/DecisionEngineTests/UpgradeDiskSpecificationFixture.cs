@@ -29,7 +29,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [SetUp]
         public void Setup()
         {
-            Mocker.Resolve<QualityUpgradableSpecification>();
+            Mocker.Resolve<UpgradableSpecification>();
             _upgradeDisk = Mocker.Resolve<UpgradeDiskSpecification>();
 
             _firstFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p, new Revision(version: 2)), DateAdded = DateTime.Now };

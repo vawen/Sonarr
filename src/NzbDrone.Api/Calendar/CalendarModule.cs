@@ -12,7 +12,7 @@ namespace NzbDrone.Api.Calendar
     {
         public CalendarModule(IEpisodeService episodeService,
                               ISeriesService seriesService,
-                              IQualityUpgradableSpecification qualityUpgradableSpecification,
+                              IUpgradableSpecification qualityUpgradableSpecification,
                               IBroadcastSignalRMessage signalRBroadcaster)
             : base(episodeService, seriesService, qualityUpgradableSpecification, signalRBroadcaster, "calendar")
         {

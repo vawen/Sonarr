@@ -13,7 +13,7 @@ namespace NzbDrone.Api.Wanted
         public CutoffModule(IEpisodeCutoffService episodeCutoffService,
                             IEpisodeService episodeService,
                             ISeriesService seriesService,
-                            IQualityUpgradableSpecification qualityUpgradableSpecification,
+                            IUpgradableSpecification qualityUpgradableSpecification,
                             IBroadcastSignalRMessage signalRBroadcaster)
             : base(episodeService, seriesService, qualityUpgradableSpecification, signalRBroadcaster, "wanted/cutoff")
         {

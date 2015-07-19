@@ -29,7 +29,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [SetUp]
         public void Setup()
         {
-            Mocker.Resolve<QualityUpgradableSpecification>();
+            Mocker.Resolve<UpgradableSpecification>();
 
             var _languages = new List<ProfileLanguageItem>();
             _languages.Add(new ProfileLanguageItem { Language = Language.English, Allowed = true });

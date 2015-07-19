@@ -20,14 +20,14 @@ namespace NzbDrone.Api.EpisodeFiles
         private readonly IMediaFileService _mediaFileService;
         private readonly IRecycleBinProvider _recycleBinProvider;
         private readonly ISeriesService _seriesService;
-        private readonly IQualityUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly IUpgradableSpecification _qualityUpgradableSpecification;
         private readonly Logger _logger;
 
         public EpisodeModule(IBroadcastSignalRMessage signalRBroadcaster,
                              IMediaFileService mediaFileService,
                              IRecycleBinProvider recycleBinProvider,
                              ISeriesService seriesService,
-                             IQualityUpgradableSpecification qualityUpgradableSpecification,
+                             IUpgradableSpecification qualityUpgradableSpecification,
                              Logger logger)
             : base(signalRBroadcaster)
         {

@@ -89,7 +89,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
 
         private void GivenUpgradeForExistingFile()
         {
-            Mocker.GetMock<IQualityUpgradableSpecification>()
+            Mocker.GetMock<IUpgradableSpecification>()
                   .Setup(s => s.IsUpgradable(It.IsAny<Profile>(), It.IsAny<QualityModel>(), It.IsAny<Language>(), It.IsAny<QualityModel>(), It.IsAny<Language>()))
                   .Returns(true);
         }
@@ -147,7 +147,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
             GivenExistingFile(new QualityModel(Quality.HDTV720p), Language.English);
             GivenUpgradeForExistingFile();
 
-            Mocker.GetMock<IQualityUpgradableSpecification>()
+            Mocker.GetMock<IUpgradableSpecification>()
                   .Setup(s => s.IsRevisionUpgrade(It.IsAny<QualityModel>(), It.IsAny<QualityModel>()))
                   .Returns(true);
 
@@ -165,7 +165,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
             GivenExistingFile(new QualityModel(Quality.HDTV720p), Language.English);
             GivenUpgradeForExistingFile();
 
-            Mocker.GetMock<IQualityUpgradableSpecification>()
+            Mocker.GetMock<IUpgradableSpecification>()
                   .Setup(s => s.IsRevisionUpgrade(It.IsAny<QualityModel>(), It.IsAny<QualityModel>()))
                   .Returns(true);
 

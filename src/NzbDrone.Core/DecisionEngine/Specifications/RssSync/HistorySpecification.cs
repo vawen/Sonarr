@@ -11,12 +11,12 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
     public class HistorySpecification : IDecisionEngineSpecification
     {
         private readonly IHistoryService _historyService;
-        private readonly QualityUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly UpgradableSpecification _qualityUpgradableSpecification;
         private readonly IProvideDownloadClient _downloadClientProvider;
         private readonly Logger _logger;
 
         public HistorySpecification(IHistoryService historyService,
-                                           QualityUpgradableSpecification qualityUpgradableSpecification,
+                                           UpgradableSpecification qualityUpgradableSpecification,
                                            IProvideDownloadClient downloadClientProvider,
                                            Logger logger)
         {

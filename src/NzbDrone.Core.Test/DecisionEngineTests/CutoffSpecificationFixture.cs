@@ -11,7 +11,7 @@ using System.Collections.Generic;
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
-    public class CutoffSpecificationFixture : CoreTest<QualityUpgradableSpecification>
+    public class CutoffSpecificationFixture : CoreTest<UpgradableSpecification>
     {
         [Test]
         public void should_return_true_if_current_episode_is_less_than_cutoff()

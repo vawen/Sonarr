@@ -32,7 +32,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [SetUp]
         public void Setup()
         {
-            Mocker.Resolve<QualityUpgradableSpecification>();
+            Mocker.Resolve<UpgradableSpecification>();
             _upgradeHistory = Mocker.Resolve<HistorySpecification>();
 
             var singleEpisodeList = new List<Episode> { new Episode { Id = 1, SeasonNumber = 12, EpisodeNumber = 3 } };

@@ -14,7 +14,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
     
-    public class QualityUpgradeSpecificationFixture : CoreTest<QualityUpgradableSpecification>
+    public class QualityUpgradeSpecificationFixture : CoreTest<UpgradableSpecification>
     {
         public static object[] IsUpgradeTestCases =
         {

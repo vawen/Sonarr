@@ -21,11 +21,11 @@ namespace NzbDrone.Api.Episodes
     {
         protected readonly IEpisodeService _episodeService;
         protected readonly ISeriesService _seriesService;
-        protected readonly IQualityUpgradableSpecification _qualityUpgradableSpecification;
+        protected readonly IUpgradableSpecification _qualityUpgradableSpecification;
 
         protected EpisodeModuleWithSignalR(IEpisodeService episodeService,
                                            ISeriesService seriesService,
-                                           IQualityUpgradableSpecification qualityUpgradableSpecification,
+                                           IUpgradableSpecification qualityUpgradableSpecification,
                                            IBroadcastSignalRMessage signalRBroadcaster)
             : base(signalRBroadcaster)
         {
@@ -38,7 +38,7 @@ namespace NzbDrone.Api.Episodes
 
         protected EpisodeModuleWithSignalR(IEpisodeService episodeService,
                                            ISeriesService seriesService,
-                                           IQualityUpgradableSpecification qualityUpgradableSpecification,
+                                           IUpgradableSpecification qualityUpgradableSpecification,
                                            IBroadcastSignalRMessage signalRBroadcaster,
                                            String resource)
             : base(signalRBroadcaster, resource)

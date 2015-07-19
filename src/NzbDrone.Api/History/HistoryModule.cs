@@ -11,11 +11,11 @@ namespace NzbDrone.Api.History
     public class HistoryModule : NzbDroneRestModule<HistoryResource>
     {
         private readonly IHistoryService _historyService;
-        private readonly IQualityUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly IUpgradableSpecification _qualityUpgradableSpecification;
         private readonly IFailedDownloadService _failedDownloadService;
 
         public HistoryModule(IHistoryService historyService,
-                             IQualityUpgradableSpecification qualityUpgradableSpecification,
+                             IUpgradableSpecification qualityUpgradableSpecification,
                              IFailedDownloadService failedDownloadService)
         {
             _historyService = historyService;

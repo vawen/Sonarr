@@ -11,11 +11,11 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
     public class QueueSpecification : IDecisionEngineSpecification
     {
         private readonly IQueueService _queueService;
-        private readonly QualityUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly UpgradableSpecification _qualityUpgradableSpecification;
         private readonly Logger _logger;
 
         public QueueSpecification(IQueueService queueService,
-                                       QualityUpgradableSpecification qualityUpgradableSpecification,
+                                       UpgradableSpecification qualityUpgradableSpecification,
                                        Logger logger)
         {
             _queueService = queueService;
