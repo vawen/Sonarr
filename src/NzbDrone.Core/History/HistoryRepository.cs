@@ -29,7 +29,7 @@ namespace NzbDrone.Core.History
 
         public List<BestInHistory> GetBestInHistory(int episodeId)
         {
-            var history = Query.Where(c => c.EpisodeId == episodeId);
+            var history = Query.Where(c => (c.EpisodeId == episodeId && c.EventType != HistoryEventType.EpisodeFileDeleted && c.EventType != HistoryEventType.DownloadFailed));
             return history.Select(h => new BestInHistory { Language = h.Language, Quality = h.Quality }).ToList();
         }
 

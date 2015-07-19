@@ -19,7 +19,7 @@ namespace NzbDrone.Api.Profiles
             SharedValidator.RuleFor(c => c.Cutoff).NotNull();
             SharedValidator.RuleFor(c => c.CutoffLanguage).NotNull();
             SharedValidator.RuleFor(c => c.Items).MustHaveAllowedQuality();
-			SharedValidator.RuleFor(c => c.Languages).MustHaveAllowedLanguage();
+            SharedValidator.RuleFor(c => c.Languages).MustHaveAllowedLanguage();
 
             GetResourceAll = GetAll;
             GetResourceById = GetById;

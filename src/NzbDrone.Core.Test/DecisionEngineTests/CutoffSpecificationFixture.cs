@@ -11,7 +11,7 @@ using System.Collections.Generic;
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
-    public class CutoffSpecificationFixture : CoreTest<QualityUpgradableSpecification>
+    public class CutoffSpecificationFixture : CoreTest<UpgradableSpecification>
     {
         [Test]
         public void should_return_true_if_current_episode_is_less_than_cutoff()
@@ -128,7 +128,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Subject.CutoffNotMet(_profile,
             new QualityModel(Quality.HDTV720p, new Revision(version: 2)),
             Language.English,
-            new QualityModel(Quality.Bluray1080p, new Revision(version: 2))).Should().BeTrue();
+            new QualityModel(Quality.Bluray1080p, new Revision(version: 2))).Should().BeFalse();
         }
 
         [Test]

@@ -11,15 +11,15 @@ namespace NzbDrone.Api.History
     public class HistoryModule : NzbDroneRestModule<HistoryResource>
     {
         private readonly IHistoryService _historyService;
-        private readonly IQualityUpgradableSpecification _qualityUpgradableSpecification;
+        private readonly IUpgradableSpecification _upgradableSpecification;
         private readonly IFailedDownloadService _failedDownloadService;
 
         public HistoryModule(IHistoryService historyService,
-                             IQualityUpgradableSpecification qualityUpgradableSpecification,
+                             IUpgradableSpecification upgradableSpecification,
                              IFailedDownloadService failedDownloadService)
         {
             _historyService = historyService;
-            _qualityUpgradableSpecification = qualityUpgradableSpecification;
+            _upgradableSpecification = upgradableSpecification;
             _failedDownloadService = failedDownloadService;
             GetResourcePaged = GetHistory;
 
@@ -34,7 +34,7 @@ namespace NzbDrone.Api.History
 
             if (history != null && history.Series != null)
             {
-                resource.QualityCutoffNotMet = _qualityUpgradableSpecification.CutoffNotMet(history.Series.Profile.Value, history.Quality, history.Language);
+                resource.QualityCutoffNotMet = _upgradableSpecification.CutoffNotMet(history.Series.Profile.Value, history.Quality, history.Language);
             }
 
             return resource;

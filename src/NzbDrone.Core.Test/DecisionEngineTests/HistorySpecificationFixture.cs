@@ -15,6 +15,7 @@ using NzbDrone.Core.Tv;
 using NzbDrone.Core.DecisionEngine;
 
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
@@ -32,7 +33,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [SetUp]
         public void Setup()
         {
-            Mocker.Resolve<QualityUpgradableSpecification>();
+            Mocker.Resolve<UpgradableSpecification>();
             _upgradeHistory = Mocker.Resolve<HistorySpecification>();
 
             var singleEpisodeList = new List<Episode> { new Episode { Id = 1, SeasonNumber = 12, EpisodeNumber = 3 } };
@@ -133,9 +134,15 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [Test]
         public void should_not_be_upgradable_if_episode_is_of_same_quality_as_existing()
         {
-            _fakeSeries.Profile = new Profile { Cutoff = Quality.WEBDL1080p, Items = Qualities.QualityFixture.GetDefaultQualities() };
+            _fakeSeries.Profile = new Profile { Cutoff = Quality.WEBDL1080p, Items = Qualities.QualityFixture.GetDefaultQualities(), AllowLanguageUpgrade = false, LanguageOverQuality = false };
+            var languages = new List<ProfileLanguageItem> ();
+            languages.Add(new ProfileLanguageItem { Allowed = true, Language = Language.English });
+            languages.Add(new ProfileLanguageItem { Allowed = true, Language = Language.Spanish });
+            languages.Add(new ProfileLanguageItem { Allowed = true, Language = Language.French });
+            _fakeSeries.Profile.Value.Languages = languages;
             _parseResultSingle.ParsedEpisodeInfo.Quality = new QualityModel(Quality.WEBDL1080p, new Revision(version: 1));
-            _upgradableQuality = new BestInHistory { Quality = new QualityModel(Quality.WEBDL1080p, new Revision(version: 1)) };
+            _parseResultSingle.ParsedEpisodeInfo.Language = Language.English;
+            _upgradableQuality = new BestInHistory { Quality = new QualityModel(Quality.WEBDL1080p, new Revision(version: 1)), Language = Language.English };
 
             Mocker.GetMock<IHistoryService>().Setup(c => c.GetBestInHistory(It.IsAny<Profile>(), 1)).Returns(_upgradableQuality);
 
