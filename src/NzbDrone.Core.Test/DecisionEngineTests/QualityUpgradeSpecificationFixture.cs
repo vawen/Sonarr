@@ -30,6 +30,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         public static object[] IsUpgradeTestCasesLanguages =
         {
             new object[] { Quality.SDTV, 1, Language.English, Quality.SDTV, 2, Language.English, Quality.SDTV, Language.Spanish, true },
+            new object[] { Quality.SDTV, 1, Language.English, Quality.SDTV, 1, Language.Spanish, Quality.SDTV, Language.Spanish, true },
             new object[] { Quality.WEBDL720p, 1, Language.French, Quality.WEBDL720p, 2, Language.English, Quality.WEBDL720p, Language.Spanish, false },
             new object[] { Quality.SDTV, 1, Language.English, Quality.SDTV, 1, Language.English, Quality.SDTV, Language.English, false },
             new object[] { Quality.WEBDL720p, 1, Language.English, Quality.HDTV720p, 2, Language.Spanish, Quality.Bluray720p, Language.Spanish, true },
@@ -40,12 +41,12 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         public static object[] IsUpgradeTestCasesLanguagesCantUpgrade =
         {
             new object[] { Quality.SDTV, 1, Language.English, Quality.SDTV, 2, Language.English, Quality.SDTV, Language.Spanish, true },
-            new object[] { Quality.WEBDL720p, 1, Language.French, Quality.WEBDL720p, 2, Language.English, Quality.WEBDL720p, Language.Spanish, true },
+            new object[] { Quality.WEBDL720p, 1, Language.French, Quality.WEBDL720p, 2, Language.English, Quality.WEBDL720p, Language.Spanish, false },
             new object[] { Quality.WEBDL720p, 1, Language.French, Quality.WEBDL720p, 1, Language.English, Quality.WEBDL720p, Language.Spanish, false },
             new object[] { Quality.SDTV, 1, Language.English, Quality.SDTV, 1, Language.English, Quality.SDTV, Language.English, false },
             new object[] { Quality.WEBDL720p, 1, Language.English, Quality.HDTV720p, 2, Language.Spanish, Quality.Bluray720p, Language.Spanish, false },
             new object[] { Quality.WEBDL720p, 1, Language.Spanish, Quality.HDTV720p, 2, Language.French, Quality.WEBDL720p, Language.Spanish, false },
-            new object[] { Quality.SDTV, 1, Language.Spanish, Quality.HDTV720p, 2, Language.English, Quality.WEBDL720p, Language.Spanish, true }
+            new object[] { Quality.SDTV, 1, Language.Spanish, Quality.HDTV720p, 2, Language.English, Quality.WEBDL720p, Language.Spanish, false }
         };
 
 
@@ -80,7 +81,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             };
 
-            Subject.IsUpgradable(profile, new QualityModel(current, new Revision(version: currentVersion)), Language.English, new QualityModel(newQuality, new Revision(version: newVersion)))
+            Subject.IsUpgradable(profile, new QualityModel(current, new Revision(version: currentVersion)), Language.English, new QualityModel(newQuality, new Revision(version: newVersion)), Language.English)
                     .Should().Be(expected);
         }
 
@@ -152,7 +153,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             };
 
 
-            Subject.IsUpgradable(profile, new QualityModel(Quality.DVD, new Revision(version: 2)), Language.English, new QualityModel(Quality.DVD, new Revision(version: 1)))
+            Subject.IsUpgradable(profile, new QualityModel(Quality.DVD, new Revision(version: 2)), Language.English, new QualityModel(Quality.DVD, new Revision(version: 1)), Language.English)
                     .Should().BeFalse();
         }
     }

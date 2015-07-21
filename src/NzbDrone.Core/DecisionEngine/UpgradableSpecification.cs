@@ -7,7 +7,7 @@ namespace NzbDrone.Core.DecisionEngine
 {
     public interface IUpgradableSpecification
     {
-        bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null, Language newLanguage = null);
+        bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality, Language newLanguage);
         bool CutoffNotMet(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null);
         bool IsRevisionUpgrade(QualityModel currentQuality, QualityModel newQuality);
     }
@@ -21,46 +21,72 @@ namespace NzbDrone.Core.DecisionEngine
             _logger = logger;
         }
 
-        public bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality = null, Language newLanguage = null)
-        {
-            if (newLanguage != null && newLanguage != currentLanguage && !profile.AllowLanguageUpgrade && !profile.LanguageOverQuality)
-            {
-                _logger.Debug("existing item has language and no upgrade allowed. skipping");
-                return false;
-            }
+        private bool IsLanguageBlocked(Profile profile, Language currentLanguage, Language newLanguage = null)
+        {            
+            if (!profile.AllowLanguageUpgrade && currentLanguage != null && newLanguage != null && newLanguage != currentLanguage)
+                return true;
+            return false;
+        }
 
-            if (newLanguage != null && profile.AllowLanguageUpgrade && profile.LanguageOverQuality)
+        private bool IsLanguageUpgradable(Profile profile, Language currentLanguage, Language newLanguage = null) 
+        {
+            if (newLanguage != null)
             {
                 int compare = new LanguageComparer(profile).Compare(newLanguage, currentLanguage);
-                if (compare < 0)
-                {
-                    _logger.Debug("existing item has better language. skipping");
+                if (compare <= 0)
                     return false;
-                }
-                if (compare > 0)
-                    return true;
             }
+            return true;
+        }
 
+        private bool IsQualityUpgradable(Profile profile, QualityModel currentQuality, QualityModel newQuality = null)
+        {
             if (newQuality != null)
             {
                 int compare = new QualityModelComparer(profile).Compare(newQuality, currentQuality);
-                if (compare < 0)
+                if (compare <= 0)
                 {
                     _logger.Debug("existing item has better quality. skipping");
                     return false;
                 }
+            }
+            return true;
+        }
 
-                if (IsRevisionUpgrade(currentQuality, newQuality))
+
+        public bool IsUpgradable(Profile profile, QualityModel currentQuality, Language currentLanguage, QualityModel newQuality, Language newLanguage)
+        {
+            if (IsLanguageBlocked(profile, currentLanguage, newLanguage))
+            {
+                _logger.Debug("existing item has different language and no upgrade allowed. skipping");
+                return false;
+            }
+
+            if (profile.LanguageOverQuality)
+            {
+                // If languages are the same then check quality
+                if (newLanguage != null && currentLanguage == newLanguage)
                 {
-                    return true;
+                    return IsQualityUpgradable(profile, currentQuality, newQuality);
                 }
 
-                if (compare == 0 && newLanguage != null && profile.AllowLanguageUpgrade && new LanguageComparer(profile).Compare(newLanguage, currentLanguage) > 0)
+                // If language is worse then always return false
+                if (!IsLanguageUpgradable(profile, currentLanguage, newLanguage))
                 {
-                    return true;
+                    _logger.Debug("existing item has better language. skipping");
+                    return false;
+                }
+            }
+            else
+            {
+                // If qualities are the same then check language
+                if (newQuality != null && currentQuality == newQuality)
+                {
+                    return IsLanguageUpgradable(profile, currentLanguage, newLanguage);
                 }
 
-                if (compare == 0)
+                // If quality is worse then always return false
+                if (!IsQualityUpgradable(profile, currentQuality, newQuality))
                 {
                     _logger.Debug("existing item has better quality. skipping");
                     return false;
