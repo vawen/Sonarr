@@ -147,6 +147,9 @@
     <Compile Include="DataAugmentation\Scene\SceneMappingsUpdatedEvent.cs" />
     <Compile Include="DataAugmentation\Scene\ServicesProvider.cs" />
     <Compile Include="DataAugmentation\Scene\UpdateSceneMappingCommand.cs" />
+    <Compile Include="DataAugmentation\TvdbLanguages\Extensions.cs" />
+    <Compile Include="DataAugmentation\TvdbLanguages\TvdbLanguage.cs" />
+    <Compile Include="DataAugmentation\TvdbLanguages\TvdbLanguageService.cs" />
     <Compile Include="DataAugmentation\Xem\Model\XemResult.cs" />
     <Compile Include="DataAugmentation\Xem\Model\XemSceneTvdbMapping.cs" />
     <Compile Include="DataAugmentation\Xem\Model\XemValues.cs" />
@@ -731,6 +734,7 @@
     <Compile Include="Notifications\Synology\SynologyIndexerProxy.cs" />
     <Compile Include="Notifications\Synology\SynologyIndexerSettings.cs" />
     <Compile Include="Organizer\NamingConfigRepository.cs" />
+    <Compile Include="Profiles\ProfileModifiedEvent.cs" />
     <Compile Include="Profiles\Delay\DelayProfile.cs" />
     <Compile Include="Profiles\Delay\DelayProfileService.cs" />
     <Compile Include="Profiles\Delay\DelayProfileTagInUseValidator.cs" />
