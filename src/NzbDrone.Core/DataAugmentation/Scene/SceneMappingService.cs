@@ -9,6 +9,7 @@ using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using System.Collections.Generic;
 using NzbDrone.Core.Tv.Events;
+using NzbDrone.Core.Profiles;
 
 namespace NzbDrone.Core.DataAugmentation.Scene
 {
@@ -23,6 +24,7 @@ namespace NzbDrone.Core.DataAugmentation.Scene
     public class SceneMappingService : ISceneMappingService,
                                        IHandleAsync<ApplicationStartedEvent>,
                                        IHandle<SeriesRefreshStartingEvent>,
+                                       IHandle<ProfileModifiedEvent>,
                                        IExecute<UpdateSceneMappingCommand>
     {
         private readonly ISceneMappingRepository _repository;
@@ -210,6 +212,11 @@ namespace NzbDrone.Core.DataAugmentation.Scene
         }
 
         public void Handle(SeriesRefreshStartingEvent message)
+        {
+            UpdateMappings();
+        }
+
+        public void Handle(ProfileModifiedEvent message)
         {
             UpdateMappings();
         }
