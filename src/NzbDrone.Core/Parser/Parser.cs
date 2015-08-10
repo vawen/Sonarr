@@ -50,6 +50,14 @@ namespace NzbDrone.Core.Parser
                 new Regex(@"^\[(?<subgroup>.+?)\][-_. ]?(?<title>.+?)[-_. ]+(?:[-_. ]?(?<absoluteepisode>\d{2,3}(?!\d+)))+(?:[-_. ]+(?<special>special|ova|ovd))?.*?(?<hash>\[\w{8}\])?(?:$|\.mkv)",
                           RegexOptions.IgnoreCase | RegexOptions.Compiled),
 
+                //Spanish, horrible naming
+                //The Big Bang Theory (PROPER) - Temporada 8 [HDTV][Cap.822][Español Spanish]
+                //Bones - Temporada 10 [HDTV][Cap.1016][Español Spanish] NEWPCT
+                //Juego de Tronos - Temporada 4 COMPLETA [BLURAYRIP 1080p][Cap.1_10][DTS Español Spanish] x264-NEWPCT
+                //https://kat.cr/usearch/%22Cap.%20%22Temporada/
+                new Regex(@"^(?<title>.+?)(?:[()-].+?)(?<!\d)(?<season>\d{1,2})(?!\d)(?:.+\[Cap.)(?:(\k<season>)(?<episode>\d{2})|(?<episode>\d{1,2})_(?<episode>\d{1,2}))",
+                          RegexOptions.IgnoreCase | RegexOptions.Compiled),
+
                 //Anime - Title Absolute Episode Number [SubGroup]
                 new Regex(@"^(?<title>.+?)(?:(?:_|-|\s|\.)+(?<absoluteepisode>\d{3}(?!\d+)))+(?:.+?)\[(?<subgroup>.+?)\].*?(?<hash>\[\w{8}\])?(?:$|\.)",
                           RegexOptions.IgnoreCase | RegexOptions.Compiled),
