@@ -10,7 +10,6 @@ namespace NzbDrone.Core.Test.ParserTests
     [TestFixture]
     public class LanguageParserFixture : CoreTest
     {
-
         [TestCase("Castle.2009.S01E14.English.HDTV.XviD-LOL", 1)]
         [TestCase("Castle.2009.S01E14.French.HDTV.XviD-LOL", 2)]
         [TestCase("Castle.2009.S01E14.Spanish.HDTV.XviD-LOL", 3)]
@@ -45,10 +44,11 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Constantine.2014.S01E01.WEBRiP.H264.AAC.5.1-NL.SUBS", 7)]
         [TestCase("Elementary - S02E16 - Kampfhaehne - mkv - by Videomann", 4)]
         [TestCase("Two.Greedy.Italians.S01E01.The.Family.720p.HDTV.x264-FTP", 1)]
-        [TestCase("Castle.2009.S01E14.HDTV.XviD.HUNDUB-LOL", 23)]
-        [TestCase("Castle.2009.S01E14.HDTV.XviD.ENG.HUN-LOL", 23)]
-        [TestCase("Castle.2009.S01E14.HDTV.XviD.HUN-LOL", 23)]
-        public void should_parse_language(string postTitle, int language)        {
+        [TestCase("Castle.2009.S01E14.HDTV.XviD.HUNDUB-LOL", 22)]
+        [TestCase("Castle.2009.S01E14.HDTV.XviD.ENG.HUN-LOL", 22)]
+        [TestCase("Castle.2009.S01E14.HDTV.XviD.HUN-LOL", 22)]
+        public void should_parse_language(string postTitle, int language)
+        {
             var result = Parser.Parser.ParseTitle(postTitle);
             result.Language.Id.Should().Be(language);
         }

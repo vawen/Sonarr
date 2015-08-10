@@ -248,9 +248,6 @@
     <Compile Include="Datastore\Migration\065_make_scene_numbering_nullable.cs" />
     <Compile Include="Datastore\Migration\110_history_language.cs" />
     <Compile Include="Datastore\Migration\120_blacklist_language.cs" />
-    <Compile Include="Datastore\Migration\087_remove_eztv.cs" />
-    <Compile Include="Datastore\Migration\078_add_commands_table.cs" />
-    <Compile Include="Datastore\Migration\068_add_release_restrictions.cs" />
     <Compile Include="Datastore\Migration\066_add_tags.cs" />
     <Compile Include="Datastore\Migration\067_add_added_to_series.cs" />
     <Compile Include="Datastore\Migration\068_add_release_restrictions.cs" />

@@ -23,7 +23,8 @@ namespace NzbDrone.Core.Test.Datastore.Migration
                     GrabDelay = 1,
                     Name = "OneHour",
                     Cutoff = 0,
-                    Items = "[]"
+                    Items = "[]",
+                    Language = 1
                 });
 
                 c.Insert.IntoTable("Profiles").Row(new
@@ -31,7 +32,8 @@ namespace NzbDrone.Core.Test.Datastore.Migration
                     GrabDelay = 2,
                     Name = "TwoHours",
                     Cutoff = "{}",
-                    Items = "[]"
+                    Items = "[]",
+                    Language = 1
                 });
             });
 
@@ -53,7 +55,8 @@ namespace NzbDrone.Core.Test.Datastore.Migration
                     GrabDelay = 1,
                     Name = "OneHour",
                     Cutoff = 0,
-                    Items = "[]"
+                    Items = "[]",
+                    Language = 1
                 })
             );
 
@@ -73,7 +76,8 @@ namespace NzbDrone.Core.Test.Datastore.Migration
                                                        GrabDelay = 1,
                                                        Name = "OneHour",
                                                        Cutoff = 0,
-                                                       Items = "[]"
+                                                       Items = "[]",
+                                                       Language = 1
                                                    });
 
                 c.Insert.IntoTable("Series").Row(new
@@ -91,7 +95,8 @@ namespace NzbDrone.Core.Test.Datastore.Migration
                                                      RunTime = 0,
                                                      SeriesType = 0,
                                                      UseSceneNumbering = 0,
-                                                     Tags = "[1]"
+                                                     Tags = "[1]",
+                                                     ProfileId = 1
                                                  });
             });
 
