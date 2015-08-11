@@ -23,13 +23,15 @@ namespace NzbDrone.Core.Profiles
     {
         private readonly IProfileRepository _profileRepository;
         private readonly ISeriesService _seriesService;
+        private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
 
-        public ProfileService(IProfileRepository profileRepository, ISeriesService seriesService, Logger logger)
+        public ProfileService(IProfileRepository profileRepository, ISeriesService seriesService, Logger logger, IEventAggregator eventAggregator)
         {
             _profileRepository = profileRepository;
             _seriesService = seriesService;
             _logger = logger;
+            _eventAggregator = eventAggregator;
         }
 
         public Profile Add(Profile profile)
@@ -40,6 +42,7 @@ namespace NzbDrone.Core.Profiles
         public void Update(Profile profile)
         {
             _profileRepository.Update(profile);
+            _eventAggregator.PublishEvent(new ProfileModifiedEvent(profile.Id));
         }
 
         public void Delete(int id)
