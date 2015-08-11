@@ -34,25 +34,5 @@ namespace NzbDrone.Core.DataAugmentation.TvdbLanguages
             }
             throw new XmlSchemaException("Could not find element <Data>");
         }
-
-        /// <summary>
-        ///     Retrieves a value from an XML tree.
-        /// </summary>
-        /// <param name="xmlObject">The given XML (sub)tree.</param>
-        /// <param name="element">Name of the element with the data.</param>
-        /// <returns>Returns the value corresponding to the given element name;</returns>
-        /// <exception cref="XmlSchemaException">Thrown when the element doesn't exist.</exception>
-        public static string GetXmlData(this XElement xmlObject, string element)
-        {
-            var result = xmlObject.Element(element);
-
-            return result != null ? result.Value : null;
-
-            // Removed in favor of returning a null value
-            // This will allow us to catch a non-existing tag with the null-coalescing operator
-            // Never trust the XML provider.
-
-            //throw new XmlSchemaException("Element <" + element + "> could not be found.");
-        }
     }
 }

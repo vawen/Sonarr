@@ -12,6 +12,8 @@ namespace NzbDrone.Core.DataAugmentation.TvdbLanguages
         public Language Language { get; set; }
         public int TvdbID { get; set; }
 
+
+        // http://thetvdb.com/api/1D62F2F90030C444/languages.xml
         public static TvdbLanguage GetTvdbLanguage (Language language)
         {
             switch (language)
@@ -54,6 +56,8 @@ namespace NzbDrone.Core.DataAugmentation.TvdbLanguages
                     return new TvdbLanguage { Language = language, TvdbID = 8, TvdbString = "sv" };
                 case Language.Turkish:
                     return new TvdbLanguage { Language = language, TvdbID = 21, TvdbString = "tr" };
+                case Language.Hungarian:
+                    return new TvdbLanguage { Language = language, TvdbID = 19, TvdbString = "hu" };
                 default:
                     return new TvdbLanguage { Language = language, TvdbID = 7, TvdbString = "en" };
             }
