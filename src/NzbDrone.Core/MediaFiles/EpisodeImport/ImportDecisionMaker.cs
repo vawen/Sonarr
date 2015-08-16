@@ -11,6 +11,7 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.MediaFiles.MediaInfo;
+using NzbDrone.Core.Profiles;
 
 
 namespace NzbDrone.Core.MediaFiles.EpisodeImport
@@ -34,6 +35,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
         public ImportDecisionMaker(IEnumerable<IImportDecisionEngineSpecification> specifications,
                                    IParsingService parsingService,
                                    IMediaFileService mediaFileService,
+                                   IMovieMediaFileService movieMediaFileService,
                                    IDiskProvider diskProvider,
                                    IVideoFileInfoReader videoFileInfoReader,
                                    IDetectSample detectSample,
@@ -80,7 +82,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
 
                 if (localEpisode != null)
                 {
-                    localEpisode.Quality = GetQuality(folderInfo, localEpisode.Quality, series);
+                    localEpisode.Quality = GetQuality(folderInfo, localEpisode.Quality, series.Profile);
                     localEpisode.Size = _diskProvider.GetFileSize(file);
 
                     _logger.Debug("Size: {0}", localEpisode.Size);
@@ -163,7 +165,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
             {
                 var size = _diskProvider.GetFileSize(file);
                 var fileQuality = QualityParser.ParseQuality(file);
-                var sample = _detectSample.IsSample(series, GetQuality(folderInfo, fileQuality, series), file, size, folderInfo.SeasonNumber);
+                var sample = _detectSample.IsSample(series, GetQuality(folderInfo, fileQuality, series.Profile), file, size, folderInfo.SeasonNumber);
 
                 if (sample)
                 {
@@ -179,11 +181,11 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
             }) == 1;
         }
 
-        private QualityModel GetQuality(ParsedEpisodeInfo folderInfo, QualityModel fileQuality, Series series)
+       private QualityModel GetQuality(ParsedEpisodeInfo folderInfo, QualityModel fileQuality, Profile profile)
         {
             if (folderInfo != null &&
                 folderInfo.Quality.Quality != Quality.Unknown && 
-                new QualityModelComparer(series.Profile).Compare(folderInfo.Quality, fileQuality) > 0)
+                new QualityModelComparer(profile).Compare(folderInfo.Quality, fileQuality) > 0)
             {
                 _logger.Debug("Using quality from folder: {0}", folderInfo.Quality);
                 return folderInfo.Quality;

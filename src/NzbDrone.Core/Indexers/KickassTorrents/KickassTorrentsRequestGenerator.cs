@@ -104,6 +104,11 @@ namespace NzbDrone.Core.Indexers.KickassTorrents
             return pageableRequests;
         }
 
+        public virtual IList<IEnumerable<IndexerRequest>> GetSearchRequests(MovieSearchCriteria searchCriteria)
+        {
+            return new List<IEnumerable<IndexerRequest>>();
+        }
+
         private IEnumerable<IndexerRequest> GetPagedRequests(Int32 maxPages, String rssType, params String[] searchParameters)
         {
             String searchUrl = null;

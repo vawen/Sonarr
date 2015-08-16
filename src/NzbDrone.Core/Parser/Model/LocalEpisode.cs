@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.MediaFiles.MediaInfo;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Parser.Model
 {
@@ -22,6 +23,9 @@ namespace NzbDrone.Core.Parser.Model
         public QualityModel Quality { get; set; }
         public MediaInfoModel MediaInfo { get; set; }
         public Boolean ExistingFile { get; set; }
+
+        public Movie Movie { get; set; }
+        public ParsedMovieInfo ParsedMovieInfo { get; set; }
         
         public int SeasonNumber 
         { 

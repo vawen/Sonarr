@@ -9,13 +9,16 @@ using NzbDrone.Common.Processes;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Validation;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Notifications.CustomScript
 {
     public interface ICustomScriptService
     {
         void OnDownload(Series series, EpisodeFile episodeFile, CustomScriptSettings settings);
+        void OnDownloadMovie(Movie movie, MovieFile movieFile, CustomScriptSettings settings);
         void OnRename(Series series, CustomScriptSettings settings);
+        void OnRenameMovie(Movie movie, CustomScriptSettings settings);
         ValidationFailure Test(CustomScriptSettings settings);
     }
 
@@ -56,6 +59,26 @@ namespace NzbDrone.Core.Notifications.CustomScript
             ExecuteScript(environmentVariables, settings);
         }
 
+        public void OnDownloadMovie(Movie movie, MovieFile movieFile, CustomScriptSettings settings)
+        {
+            var environmentVariables = new StringDictionary();
+
+            environmentVariables.Add("Sonarr.EventType", "DownloadMovie");
+            environmentVariables.Add("Sonarr.Movie.Id", movie.Id.ToString());
+            environmentVariables.Add("Sonarr.Movie.Title", movie.Title);
+            environmentVariables.Add("Sonarr.Movie.Path", movie.Path);
+            environmentVariables.Add("Sonarr.Movie.TmdbId", movie.TmdbId.ToString());
+            environmentVariables.Add("Sonarr.MovieFile.Id", movieFile.Id.ToString());
+            environmentVariables.Add("Sonarr.MovieFile.RelativePath", movieFile.RelativePath);
+            environmentVariables.Add("Sonarr.MovieFile.Path", Path.Combine(movie.Path, movieFile.RelativePath));
+            environmentVariables.Add("Sonarr.MovieFile.Quality", movieFile.Quality.Quality.Name);
+            environmentVariables.Add("Sonarr.MovieFile.QualityVersion", movieFile.Quality.Revision.Version.ToString());
+            environmentVariables.Add("Sonarr.MovieFile.ReleaseGroup", movieFile.ReleaseGroup ?? String.Empty);
+            environmentVariables.Add("Sonarr.MovieFile.SceneName", movieFile.SceneName ?? String.Empty);
+
+            ExecuteScript(environmentVariables, settings);
+        }
+
         public void OnRename(Series series, CustomScriptSettings settings)
         {
             var environmentVariables = new StringDictionary();
@@ -65,6 +88,19 @@ namespace NzbDrone.Core.Notifications.CustomScript
             environmentVariables.Add("Sonarr.Series.Title", series.Title);
             environmentVariables.Add("Sonarr.Series.Path", series.Path);
             environmentVariables.Add("Sonarr.Series.TvdbId", series.TvdbId.ToString());
+
+            ExecuteScript(environmentVariables, settings);
+        }
+
+        public void OnRenameMovie(Movie movie, CustomScriptSettings settings)
+        {
+            var environmentVariables = new StringDictionary();
+
+            environmentVariables.Add("Sonarr.EventType", "RenameMovie");
+            environmentVariables.Add("Sonarr.Movie.Id", movie.Id.ToString());
+            environmentVariables.Add("Sonarr.Movie.Title", movie.Title);
+            environmentVariables.Add("Sonarr.Movie.Path", movie.Path);
+            environmentVariables.Add("Sonarr.Movie.TmdbId", movie.TmdbId.ToString());
 
             ExecuteScript(environmentVariables, settings);
         }

@@ -24,11 +24,23 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
                 return Decision.Accept();
             }
 
-            var sample = _detectSample.IsSample(localEpisode.Series,
+            var sample = false;
+
+            if (localEpisode.Series == null)
+            {
+                sample = _detectSample.IsSample(localEpisode.Movie,
+                                                localEpisode.Quality,
+                                                localEpisode.Path,
+                                                localEpisode.Size);
+            }
+            else
+            {
+                sample = _detectSample.IsSample(localEpisode.Series,
                                                 localEpisode.Quality,
                                                 localEpisode.Path,
                                                 localEpisode.Size,
                                                 localEpisode.SeasonNumber);
+            }
 
             if (sample)
             {

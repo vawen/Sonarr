@@ -199,6 +199,8 @@ namespace NzbDrone.Core.Tv
 
         public void Handle(EpisodeFileDeletedEvent message)
         {
+            if (message.EpisodeFile.SeriesId == 0)
+                return;
             foreach (var episode in GetEpisodesByFileId(message.EpisodeFile.Id))
             {
                 _logger.Debug("Detaching episode {0} from file.", episode.Id);
@@ -215,10 +217,13 @@ namespace NzbDrone.Core.Tv
 
         public void Handle(EpisodeFileAddedEvent message)
         {
-            foreach (var episode in message.EpisodeFile.Episodes.Value)
+            if (message.EpisodeFile.SeriesId > 0)
             {
-                _episodeRepository.SetFileId(episode.Id, message.EpisodeFile.Id);
-                _logger.Debug("Linking [{0}] > [{1}]", message.EpisodeFile.RelativePath, episode);
+                foreach (var episode in message.EpisodeFile.Episodes.Value)
+                {
+                    _episodeRepository.SetFileId(episode.Id, message.EpisodeFile.Id);
+                    _logger.Debug("Linking [{0}] > [{1}]", message.EpisodeFile.RelativePath, episode);
+                }
             }
         }
     }

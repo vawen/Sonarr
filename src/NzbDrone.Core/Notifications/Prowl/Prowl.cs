@@ -3,6 +3,7 @@ using FluentValidation.Results;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Tv;
 using Prowlin;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Notifications.Prowl
 {
@@ -34,8 +35,27 @@ namespace NzbDrone.Core.Notifications.Prowl
             _prowlService.SendNotification(title, message.Message, Settings.ApiKey, (NotificationPriority)Settings.Priority);
         }
 
+        public override void OnDownloadMovie(DownloadMovieMessage message)
+        {
+            const string title = "Movie Downloaded";
+
+            _prowlService.SendNotification(title, message.Message, Settings.ApiKey, (NotificationPriority)Settings.Priority);
+        }
+
         public override void OnRename(Series series)
         {
+        }
+
+        public override void OnRenameMovie(Movie movie)
+        {
+        }
+
+        public override bool SupportsOnRenameMovie
+        {
+            get
+            {
+                return false;
+            }
         }
 
         public override string Name

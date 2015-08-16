@@ -17,6 +17,8 @@ using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Metadata
 {
+
+    //TODO: Metadata for movies
     public class MetadataService : IHandle<MediaCoversUpdatedEvent>,
                                    IHandle<EpisodeImportedEvent>,
                                    IHandle<EpisodeFolderCreatedEvent>,
@@ -61,6 +63,10 @@ namespace NzbDrone.Core.Metadata
 
         public void Handle(MediaCoversUpdatedEvent message)
         {
+            // TODO: Metadata for movies
+            if (message.CoverOrigin == MediaCoverOrigin.Movie)
+                return;
+
             _cleanMetadataService.Clean(message.Series);
 
             if (!_diskProvider.FolderExists(message.Series.Path))

@@ -201,6 +201,8 @@ namespace NzbDrone.Api.Series
 
         public void Handle(EpisodeFileDeletedEvent message)
         {
+            if (message.EpisodeFile.SeriesId == 0)
+                return;
             if (message.Reason == DeleteMediaFileReason.Upgrade) return;
 
             BroadcastResourceChange(ModelAction.Updated, message.EpisodeFile.SeriesId);
@@ -228,7 +230,8 @@ namespace NzbDrone.Api.Series
 
         public void Handle(MediaCoversUpdatedEvent message)
         {
-            BroadcastResourceChange(ModelAction.Updated, message.Series.Id);
+            if (message.CoverOrigin == MediaCoverOrigin.Series)
+                BroadcastResourceChange(ModelAction.Updated, message.Series.Id);
         }
     }
 }

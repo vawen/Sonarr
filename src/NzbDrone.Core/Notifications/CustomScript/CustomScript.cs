@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using FluentValidation.Results;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Notifications.CustomScript
 {
@@ -27,9 +28,19 @@ namespace NzbDrone.Core.Notifications.CustomScript
             _customScriptService.OnDownload(message.Series, message.EpisodeFile, Settings);
         }
 
+        public override void OnDownloadMovie(DownloadMovieMessage message)
+        {
+            _customScriptService.OnDownloadMovie(message.Movie, message.MovieFile, Settings);
+        }
+
         public override void OnRename(Series series)
         {
             _customScriptService.OnRename(series, Settings);
+        }
+
+        public override void OnRenameMovie(Movie movie)
+        {
+            _customScriptService.OnRenameMovie(movie, Settings);
         }
 
         public override string Name

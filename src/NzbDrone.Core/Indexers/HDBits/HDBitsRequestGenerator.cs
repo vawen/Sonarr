@@ -100,6 +100,12 @@ namespace NzbDrone.Core.Indexers.HDBits
             return requests;
         }
 
+        public virtual IList<IEnumerable<IndexerRequest>> GetSearchRequests(MovieSearchCriteria searchCriteria)
+        {
+            return new List<IEnumerable<IndexerRequest>>();
+        }
+
+
         private bool TryAddSearchParameters(TorrentQuery query, SearchCriteriaBase searchCriteria)
         {
             if (searchCriteria.Series.TvdbId != 0)

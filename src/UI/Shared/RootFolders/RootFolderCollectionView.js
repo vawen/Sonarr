@@ -2,7 +2,7 @@ var Marionette = require('marionette');
 var RootFolderItemView = require('./RootFolderItemView');
 
 module.exports = Marionette.CompositeView.extend({
-    template          : 'AddSeries/RootFolders/RootFolderCollectionViewTemplate',
+    template          : 'Shared/RootFolders/RootFolderCollectionViewTemplate',
     itemViewContainer : '.x-root-folders',
     itemView          : RootFolderItemView
 });

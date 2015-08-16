@@ -17,6 +17,9 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
         }
         public Decision IsSatisfiedBy(LocalEpisode localEpisode)
         {
+            if (localEpisode.ParsedEpisodeInfo == null)
+                return Decision.Accept();
+
             if (localEpisode.ExistingFile)
             {
                 return Decision.Accept();

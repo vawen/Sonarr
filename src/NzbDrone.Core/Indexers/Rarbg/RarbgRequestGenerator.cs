@@ -63,6 +63,11 @@ namespace NzbDrone.Core.Indexers.Rarbg
             return new List<IEnumerable<IndexerRequest>>();
         }
 
+        public virtual IList<IEnumerable<IndexerRequest>> GetSearchRequests(MovieSearchCriteria searchCriteria)
+        {
+            return new List<IEnumerable<IndexerRequest>>();
+        }
+
         private IEnumerable<IndexerRequest> GetPagedRequests(string mode, int? tvdbId, string query, params object[] args)
         {
             var httpRequest = new HttpRequest(Settings.BaseUrl + "/pubapi_v2.php", HttpAccept.Json);

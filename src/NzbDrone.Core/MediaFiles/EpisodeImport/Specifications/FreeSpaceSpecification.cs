@@ -37,7 +37,15 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
                     return Decision.Accept();
                 }
 
-                var path = Directory.GetParent(localEpisode.Series.Path);
+                if (localEpisode.Series == null && localEpisode.Movie == null)
+                {
+                    _logger.Debug("No serie or movie info");
+                    return Decision.Reject("Shouldn't happend: No serie or movie info");
+                }
+                
+                var path = Directory.GetParent(localEpisode.Series == null ? localEpisode.Movie.Path : localEpisode.Series.Path);
+
+
                 var freeSpace = _diskProvider.GetAvailableSpace(path.FullName);
 
                 if (!freeSpace.HasValue)

@@ -170,5 +170,11 @@ namespace NzbDrone.Core.Indexers.BroadcastheNet
                 yield return new IndexerRequest(builder.Build(""));
             }
         }
+
+        public virtual IList<IEnumerable<IndexerRequest>> GetSearchRequests(MovieSearchCriteria searchCriteria)
+        {
+            return new List<IEnumerable<IndexerRequest>>();
+        }
+
     }
 }

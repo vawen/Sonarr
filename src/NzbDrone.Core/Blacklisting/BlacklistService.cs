@@ -17,6 +17,8 @@ namespace NzbDrone.Core.Blacklisting
         PagingSpec<Blacklist> Paged(PagingSpec<Blacklist> pagingSpec);
         void Delete(int id);
     }
+
+    //TODO: Blacklist movies (MovieDeletedEvent)
     public class BlacklistService : IBlacklistService,
 
                                     IExecute<ClearBlacklistCommand>,
