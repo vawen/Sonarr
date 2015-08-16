@@ -2,6 +2,7 @@
 using FluentValidation.Results;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Notifications.Plex
 {
@@ -28,9 +29,33 @@ namespace NzbDrone.Core.Notifications.Plex
             UpdateIfEnabled(message.Series);
         }
 
+        public override void OnDownloadMovie(DownloadMovieMessage message)
+        {
+        }
+
+        public override bool SupportsOnDownloadMovie
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         public override void OnRename(Series series)
         {
             UpdateIfEnabled(series);
+        }
+
+        public override void OnRenameMovie(Movie movie)
+        {
+        }
+
+        public override bool SupportsOnRenameMovie
+        {
+            get
+            {
+                return false;
+            }
         }
 
         private void UpdateIfEnabled(Series series)

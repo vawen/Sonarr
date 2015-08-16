@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentValidation.Results;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Notifications.MediaBrowser
 {
@@ -45,6 +46,17 @@ namespace NzbDrone.Core.Notifications.MediaBrowser
             }
         }
 
+        public override void OnDownloadMovie(DownloadMovieMessage message)
+        {
+            const string title = "Sonarr - Downloaded";
+
+            if (Settings.Notify)
+            {
+                _mediaBrowserService.Notify(Settings, title, message.Message);
+            }
+
+        }
+
         public override void OnRename(Series series)
         {
             if (Settings.UpdateLibrary)
@@ -53,11 +65,23 @@ namespace NzbDrone.Core.Notifications.MediaBrowser
             }
         }
 
+        public override void OnRenameMovie(Movie movie)
+        {
+        }
+
         public override string Name
         {
             get
             {
                 return "Emby (Media Browser)";
+            }
+        }
+
+        public override bool SupportsOnRenameMovie
+        {
+            get
+            {
+                return false;
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using NzbDrone.Core.ThingiProvider;
+﻿using NzbDrone.Core.Movies;
+using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Notifications
@@ -9,10 +10,14 @@ namespace NzbDrone.Core.Notifications
 
         void OnGrab(GrabMessage grabMessage);
         void OnDownload(DownloadMessage message);
+        void OnDownloadMovie(DownloadMovieMessage message);
         void OnRename(Series series);
+        void OnRenameMovie(Movie series);
         bool SupportsOnGrab { get; }
         bool SupportsOnDownload { get; }
+        bool SupportsOnDownloadMovie { get; }
         bool SupportsOnUpgrade { get; }
         bool SupportsOnRename { get; }
+        bool SupportsOnRenameMovie { get; }
     }
 }

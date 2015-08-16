@@ -2,6 +2,7 @@
 using FluentValidation.Results;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Tv;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Notifications.Twitter
 {
@@ -30,7 +31,16 @@ namespace NzbDrone.Core.Notifications.Twitter
             _twitterService.SendNotification(message.Message, Settings);
         }
 
+        public override void OnDownloadMovie(DownloadMovieMessage message)
+        {
+            _twitterService.SendNotification(message.Message, Settings);
+        }
+
         public override void OnRename(Series series)
+        {
+        }
+
+        public override void OnRenameMovie(Movie movie)
         {
         }
 
@@ -72,6 +82,13 @@ namespace NzbDrone.Core.Notifications.Twitter
             }
         }
 
+        public override bool SupportsOnRenameMovie
+        {
+            get
+            {
+                return false;
+            }
+        }
         public override ValidationResult Test()
         {
             var failures = new List<ValidationFailure>();

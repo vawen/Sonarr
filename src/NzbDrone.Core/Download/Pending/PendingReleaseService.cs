@@ -30,6 +30,8 @@ namespace NzbDrone.Core.Download.Pending
         RemoteEpisode OldestPendingRelease(int seriesId, IEnumerable<int> episodeIds);
     }
 
+    //TODO: PendingReleaseMovie (MovieDeletedEvent)
+
     public class PendingReleaseService : IPendingReleaseService,
                                          IHandle<SeriesDeletedEvent>,
                                          IHandle<EpisodeGrabbedEvent>,

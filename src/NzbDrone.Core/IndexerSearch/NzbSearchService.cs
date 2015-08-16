@@ -12,6 +12,7 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
 using System.Linq;
 using NzbDrone.Common.TPL;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.IndexerSearch
 {
@@ -20,6 +21,7 @@ namespace NzbDrone.Core.IndexerSearch
         List<DownloadDecision> EpisodeSearch(int episodeId);
         List<DownloadDecision> EpisodeSearch(Episode episode);
         List<DownloadDecision> SeasonSearch(int seriesId, int seasonNumber, bool missingOnly);
+        List<DownloadDecision> MovieSearch(int movieId);
     }
 
     public class NzbSearchService : ISearchForNzb
@@ -28,6 +30,7 @@ namespace NzbDrone.Core.IndexerSearch
         private readonly ISceneMappingService _sceneMapping;
         private readonly ISeriesService _seriesService;
         private readonly IEpisodeService _episodeService;
+        private readonly IMovieService _movieService;
         private readonly IMakeDownloadDecision _makeDownloadDecision;
         private readonly Logger _logger;
 
@@ -35,6 +38,7 @@ namespace NzbDrone.Core.IndexerSearch
                                 ISceneMappingService sceneMapping,
                                 ISeriesService seriesService,
                                 IEpisodeService episodeService,
+                                IMovieService movieService,
                                 IMakeDownloadDecision makeDownloadDecision,
                                 Logger logger)
         {
@@ -42,6 +46,7 @@ namespace NzbDrone.Core.IndexerSearch
             _sceneMapping = sceneMapping;
             _seriesService = seriesService;
             _episodeService = episodeService;
+            _movieService = movieService;
             _makeDownloadDecision = makeDownloadDecision;
             _logger = logger;
         }
@@ -51,6 +56,13 @@ namespace NzbDrone.Core.IndexerSearch
             var episode = _episodeService.GetEpisode(episodeId);
 
             return EpisodeSearch(episode);
+        }
+
+        public List<DownloadDecision> MovieSearch(int movieId)
+        {
+            var movie = _movieService.GetMovie(movieId);
+
+            return MovieSearch(movie);
         }
 
         public List<DownloadDecision> EpisodeSearch(Episode episode)
@@ -176,6 +188,14 @@ namespace NzbDrone.Core.IndexerSearch
             return Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
         }
 
+        public List<DownloadDecision> MovieSearch(Movie movie)
+        {
+            var searchSpec = Get<MovieSearchCriteria>(movie);
+            searchSpec.Movie = movie;
+
+            return Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+        }
+
         private List<DownloadDecision> SearchDaily(Series series, Episode episode)
         {
             var airDate = DateTime.ParseExact(episode.AirDate, Episode.AIR_DATE_FORMAT, CultureInfo.InvariantCulture);
@@ -241,6 +261,21 @@ namespace NzbDrone.Core.IndexerSearch
             spec.Episodes = episodes;
 
             spec.SceneTitles.Add(series.Title);
+
+            return spec;
+        }
+
+        private TSpec Get<TSpec>(Movie movie) where TSpec : SearchCriteriaBase, new()
+        {
+            var spec = new TSpec();
+
+            spec.Series = null;
+            spec.SceneTitles = new List<string>();
+
+            spec.Episodes = null;
+
+            spec.SceneTitles.Add(movie.Title);
+            spec.SceneTitles.Add(movie.OriginalTitle);
 
             return spec;
         }

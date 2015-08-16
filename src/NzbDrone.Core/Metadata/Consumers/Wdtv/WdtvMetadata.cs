@@ -216,7 +216,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
                 return new List<ImageFileResult>();
             }
 
-            var source = _mediaCoverService.GetCoverPath(series.Id, image.CoverType);
+            var source = _mediaCoverService.GetCoverPath(series.Id, image.CoverType, MediaCoverOrigin.Series);
             var destination = Path.Combine(series.Path, "folder" + Path.GetExtension(source));
 
             return new List<ImageFileResult>

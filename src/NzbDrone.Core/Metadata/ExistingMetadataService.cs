@@ -33,6 +33,7 @@ namespace NzbDrone.Core.Metadata
             _consumers = consumers.ToList();
         }
 
+        //TODO: Metadata for movies
         public void Handle(SeriesScannedEvent message)
         {
             if (!_diskProvider.FolderExists(message.Series.Path)) return;

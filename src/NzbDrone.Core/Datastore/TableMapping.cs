@@ -32,6 +32,7 @@ using NzbDrone.Core.Tv;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Datastore
 {
@@ -56,8 +57,10 @@ namespace NzbDrone.Core.Datastore
             Mapper.Entity<NotificationDefinition>().RegisterDefinition("Notifications")
                   .Ignore(i => i.SupportsOnGrab)
                   .Ignore(i => i.SupportsOnDownload)
+                  .Ignore(i => i.SupportsOnDownloadMovie)
                   .Ignore(i => i.SupportsOnUpgrade)
-                  .Ignore(i => i.SupportsOnRename);
+                  .Ignore(i => i.SupportsOnRename)
+                  .Ignore(i => i.SupportsOnRenameMovie);
             
             Mapper.Entity<MetadataDefinition>().RegisterDefinition("Metadata");
 
@@ -69,6 +72,12 @@ namespace NzbDrone.Core.Datastore
             Mapper.Entity<History.History>().RegisterModel("History")
                   .AutoMapChildModels();
 
+            Mapper.Entity<Movie>().RegisterModel("Movies")
+                .Ignore(s => s.RootFolderPath)
+                .Relationship()
+                .HasOne(s => s.Profile, s => s.ProfileId)
+                .HasOne(s => s.MovieFile, s => s.MovieFileId);
+           
             Mapper.Entity<Series>().RegisterModel("Series")
                   .Ignore(s => s.RootFolderPath)
                   .Relationship()
@@ -78,9 +87,17 @@ namespace NzbDrone.Core.Datastore
                   .Ignore(f => f.Path)
                   .Relationships.AutoMapICollectionOrComplexProperties()
                   .For("Episodes")
-                  .LazyLoad(condition: parent => parent.Id > 0, 
+                  .LazyLoad(condition: parent => parent.Id > 0,
                             query: (db, parent) => db.Query<Episode>().Where(c => c.EpisodeFileId == parent.Id).ToList())
                   .HasOne(file => file.Series, file => file.SeriesId);
+
+            Mapper.Entity<MovieFile>().RegisterModel("MovieFiles")
+                  .Ignore(f => f.Path)
+                  .Relationships.AutoMapICollectionOrComplexProperties()
+                  .For("Movie")
+                  .LazyLoad(condition: parent => parent.Id > 0,
+                            query: (db, parent) => db.Query<Movie>().Where(c => c.MovieFileId == parent.Id).ToList())
+                  .HasOne(file => file.Movie, file => file.MovieId);
 
             Mapper.Entity<Episode>().RegisterModel("Episodes")
                   .Ignore(e => e.SeriesTitle)

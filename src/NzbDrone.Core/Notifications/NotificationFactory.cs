@@ -11,8 +11,10 @@ namespace NzbDrone.Core.Notifications
     {
         List<INotification> OnGrabEnabled();
         List<INotification> OnDownloadEnabled();
+        List<INotification> OnDownloadMovieEnabled();
         List<INotification> OnUpgradeEnabled();
         List<INotification> OnRenameEnabled();
+        List<INotification> OnRenameMovieEnabled();
     }
 
     public class NotificationFactory : ProviderFactory<INotification, NotificationDefinition>, INotificationFactory
@@ -32,6 +34,11 @@ namespace NzbDrone.Core.Notifications
             return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnDownload).ToList();
         }
 
+        public List<INotification> OnDownloadMovieEnabled()
+        {
+            return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnDownloadMovie).ToList();
+        }
+
         public List<INotification> OnUpgradeEnabled()
         {
             return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnUpgrade).ToList();
@@ -42,14 +49,21 @@ namespace NzbDrone.Core.Notifications
             return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnRename).ToList();
         }
 
+        public List<INotification> OnRenameMovieEnabled()
+        {
+            return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnRenameMovie).ToList();
+        }
+
         public override NotificationDefinition GetProviderCharacteristics(INotification provider, NotificationDefinition definition)
         {
             definition = base.GetProviderCharacteristics(provider, definition);
 
             definition.SupportsOnGrab = provider.SupportsOnGrab;
             definition.SupportsOnDownload = provider.SupportsOnDownload;
+            definition.SupportsOnDownloadMovie = provider.SupportsOnDownloadMovie;
             definition.SupportsOnUpgrade = provider.SupportsOnUpgrade;
             definition.SupportsOnRename = provider.SupportsOnRename;
+            definition.SupportsOnRenameMovie = provider.SupportsOnRenameMovie;
 
             return definition;
         }

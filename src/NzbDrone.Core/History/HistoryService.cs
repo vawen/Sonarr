@@ -27,6 +27,7 @@ namespace NzbDrone.Core.History
         List<History> FindByDownloadId(string downloadId);
     }
 
+    //TODO: History for movies
     public class HistoryService : IHistoryService,
                                   IHandle<EpisodeGrabbedEvent>,
                                   IHandle<EpisodeImportedEvent>,
@@ -237,21 +238,24 @@ namespace NzbDrone.Core.History
                 return;
             }
 
-            foreach (var episode in message.EpisodeFile.Episodes.Value)
+            if (message.EpisodeFile.SeriesId > 0)
             {
-                var history = new History
+                foreach (var episode in message.EpisodeFile.Episodes.Value)
                 {
-                    EventType = HistoryEventType.EpisodeFileDeleted,
-                    Date = DateTime.UtcNow,
-                    Quality = message.EpisodeFile.Quality,
-                    SourceTitle = message.EpisodeFile.Path,
-                    SeriesId = message.EpisodeFile.SeriesId,
-                    EpisodeId = episode.Id,
-                };
+                    var history = new History
+                    {
+                        EventType = HistoryEventType.EpisodeFileDeleted,
+                        Date = DateTime.UtcNow,
+                        Quality = message.EpisodeFile.Quality,
+                        SourceTitle = message.EpisodeFile.Path,
+                        SeriesId = message.EpisodeFile.SeriesId,
+                        EpisodeId = episode.Id,
+                    };
 
-                history.Data.Add("Reason", message.Reason.ToString());
+                    history.Data.Add("Reason", message.Reason.ToString());
 
-                _historyRepository.Insert(history);
+                    _historyRepository.Insert(history);
+                }
             }
         }
     }

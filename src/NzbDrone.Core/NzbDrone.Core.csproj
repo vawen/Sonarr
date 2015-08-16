@@ -208,6 +208,8 @@
     <Compile Include="Datastore\Migration\026_add_config_contract_to_notifications.cs" />
     <Compile Include="Datastore\Migration\027_fix_omgwtfnzbs.cs" />
     <Compile Include="Datastore\Migration\028_add_blacklist_table.cs" />
+    <Compile Include="Datastore\Migration\154_update_notifications_onmoviedrenamed.cs" />
+    <Compile Include="Datastore\Migration\153_add_movie_format_to_naming_config.cs" />
     <Compile Include="Datastore\Migration\029_add_formats_to_naming_config.cs" />
     <Compile Include="Datastore\Migration\030_add_season_folder_format_to_naming_config.cs" />
     <Compile Include="Datastore\Migration\031_delete_old_naming_config_columns.cs" />
@@ -271,6 +273,8 @@
     <Compile Include="Datastore\Migration\090_update_kickass_url.cs" />
     <Compile Include="Datastore\Migration\091_added_indexerstatus.cs" />
     <Compile Include="Datastore\Migration\092_add_unverifiedscenenumbering.cs" />
+    <Compile Include="Datastore\Migration\150_update_notifications_onmoviedownload.cs" />
+    <Compile Include="Datastore\Migration\152_add_movies.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationContext.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationController.cs" />
     <Compile Include="Datastore\Migration\Framework\MigrationDbFactory.cs" />
@@ -431,6 +435,7 @@
     <Compile Include="Exceptions\BadRequestException.cs" />
     <Compile Include="Exceptions\DownstreamException.cs" />
     <Compile Include="Exceptions\NzbDroneClientException.cs" />
+    <Compile Include="Exceptions\MovieNotFoundException.cs" />
     <Compile Include="Exceptions\SeriesNotFoundException.cs" />
     <Compile Include="Exceptions\ReleaseDownloadException.cs" />
     <Compile Include="Exceptions\StatusCodeToExceptions.cs" />
@@ -471,6 +476,10 @@
     <Compile Include="Housekeeping\HousekeepingCommand.cs" />
     <Compile Include="Housekeeping\HousekeepingService.cs" />
     <Compile Include="Housekeeping\IHousekeepingTask.cs" />
+    <Compile Include="IndexerSearch\Definitions\MovieSearchCriteria.cs" />
+    <Compile Include="IndexerSearch\MissingMovieSearchCommand.cs" />
+    <Compile Include="IndexerSearch\MovieSearchService.cs" />
+    <Compile Include="IndexerSearch\MovieSearchCommand.cs" />
     <Compile Include="Indexers\BitMeTv\BitMeTv.cs" />
     <Compile Include="Indexers\BitMeTv\BitMeTvSettings.cs" />
     <Compile Include="Indexers\BitMeTv\BitMeTvRequestGenerator.cs" />
@@ -606,7 +615,9 @@
     <Compile Include="MediaFiles\Commands\BackendCommandAttribute.cs" />
     <Compile Include="MediaFiles\Commands\CleanUpRecycleBinCommand.cs" />
     <Compile Include="MediaFiles\Commands\DownloadedEpisodesScanCommand.cs" />
+    <Compile Include="MediaFiles\Commands\RenameMovieFiles.cs" />
     <Compile Include="MediaFiles\Commands\RenameFilesCommand.cs" />
+    <Compile Include="MediaFiles\Commands\RenameMovieCommand.cs" />
     <Compile Include="MediaFiles\Commands\RenameSeriesCommand.cs" />
     <Compile Include="MediaFiles\Commands\RescanSeriesCommand.cs" />
     <Compile Include="MediaFiles\DeleteMediaFileReason.cs" />
@@ -617,9 +628,26 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MediaFiles\DownloadedEpisodesCommandService.cs" />
+    <Compile Include="MediaFiles\Events\MovieDownloadedEvent.cs" />
+    <Compile Include="MediaFiles\Events\MovieFolderCreatedEvent.cs" />
+    <Compile Include="MediaFiles\Events\MovieImportedEvent.cs" />
+    <Compile Include="MediaFiles\Events\MovieRenamedEvent.cs" />
+    <Compile Include="MediaFiles\MediaFile.cs" />
+    <Compile Include="MediaFiles\MovieFileMovingService.cs" />
+    <Compile Include="MediaFiles\MovieFileMoveResult.cs" />
+    <Compile Include="MediaFiles\Events\MovieFileAddedEvent.cs" />
+    <Compile Include="MediaFiles\Events\MovieFileDeletedEvent.cs" />
+    <Compile Include="MediaFiles\MovieImport\IImportMovieDecisionEngineSpecification.cs" />
+    <Compile Include="MediaFiles\MovieImport\ImportMovieDecision.cs" />
+    <Compile Include="MediaFiles\MovieImport\ImportMovieDecisionMaker.cs" />
+    <Compile Include="MediaFiles\MovieImport\ImportResult.cs" />
+    <Compile Include="MediaFiles\MovieMediaFileService.cs" />
+    <Compile Include="MediaFiles\MovieMediaFileRepository.cs" />
+    <Compile Include="MediaFiles\MovieFile.cs" />
     <Compile Include="MediaFiles\EpisodeFile.cs" />
     <Compile Include="MediaFiles\EpisodeFileMoveResult.cs" />
     <Compile Include="MediaFiles\EpisodeFileMovingService.cs" />
+    <Compile Include="MediaFiles\MovieImport\ImportApprovedMovies.cs" />
     <Compile Include="MediaFiles\EpisodeImport\ImportResult.cs" />
     <Compile Include="MediaFiles\EpisodeImport\IImportDecisionEngineSpecification.cs" />
     <Compile Include="MediaFiles\EpisodeImport\ImportApprovedEpisodes.cs" />
@@ -630,7 +658,7 @@
     <Compile Include="MediaFiles\EpisodeImport\Manual\ManualImportCommand.cs" />
     <Compile Include="MediaFiles\EpisodeImport\Manual\ManualImportItem.cs" />
     <Compile Include="MediaFiles\EpisodeImport\Manual\ManualImportService.cs" />
-    <Compile Include="MediaFiles\EpisodeImport\DetectSample.cs" />
+    <Compile Include="MediaFiles\DetectSample.cs" />
     <Compile Include="MediaFiles\EpisodeImport\Manual\ManuallyImportedFile.cs" />
     <Compile Include="MediaFiles\EpisodeImport\Specifications\FreeSpaceSpecification.cs" />
     <Compile Include="MediaFiles\EpisodeImport\Specifications\MatchesFolderSpecification.cs" />
@@ -646,6 +674,8 @@
     <Compile Include="MediaFiles\Events\EpisodeFolderCreatedEvent.cs" />
     <Compile Include="MediaFiles\Events\EpisodeImportedEvent.cs" />
     <Compile Include="MediaFiles\Events\SeriesRenamedEvent.cs" />
+    <Compile Include="MediaFiles\Events\MovieScanSkippedEvent.cs" />
+    <Compile Include="MediaFiles\Events\MovieScannedEvent.cs" />
     <Compile Include="MediaFiles\Events\SeriesScanSkippedEvent.cs" />
     <Compile Include="MediaFiles\Events\SeriesScannedEvent.cs" />
     <Compile Include="MediaFiles\FileDateType.cs" />
@@ -660,11 +690,16 @@
     <Compile Include="MediaFiles\MediaInfo\MediaInfoModel.cs" />
     <Compile Include="MediaFiles\MediaInfo\UpdateMediaInfoService.cs" />
     <Compile Include="MediaFiles\MediaInfo\VideoFileInfoReader.cs" />
+    <Compile Include="MediaFiles\MovieFile.cs" />
     <Compile Include="MediaFiles\RecycleBinProvider.cs" />
+    <Compile Include="MediaFiles\RenameMovieFilePreview.cs" />
     <Compile Include="MediaFiles\RenameEpisodeFilePreview.cs" />
+    <Compile Include="MediaFiles\RenameMovieFileService.cs" />
     <Compile Include="MediaFiles\RenameEpisodeFileService.cs" />
     <Compile Include="MediaFiles\SameFilenameException.cs" />
+    <Compile Include="MediaFiles\UpdateMovieFileService.cs" />
     <Compile Include="MediaFiles\UpdateEpisodeFileService.cs" />
+    <Compile Include="MediaFiles\UpgradeMovieMediaFileService.cs" />
     <Compile Include="MediaFiles\UpgradeMediaFileService.cs" />
     <Compile Include="Messaging\Commands\BackendCommandAttribute.cs" />
     <Compile Include="Messaging\Commands\CleanupCommandMessagingService.cs" />
@@ -689,6 +724,8 @@
     <Compile Include="Messaging\Events\IEventAggregator.cs" />
     <Compile Include="Messaging\Events\IHandle.cs" />
     <Compile Include="Messaging\IProcessMessage.cs" />
+    <Compile Include="MetadataSource\IProvideMoviesInfo.cs" />
+    <Compile Include="MetadataSource\ISearchForNewMovie.cs" />
     <Compile Include="MetadataSource\SkyHook\Resource\ActorResource.cs" />
     <Compile Include="MetadataSource\SkyHook\Resource\EpisodeResource.cs" />
     <Compile Include="MetadataSource\SkyHook\Resource\ImageResource.cs" />
@@ -699,6 +736,10 @@
     <Compile Include="MetadataSource\SkyHook\SkyHookProxy.cs" />
     <Compile Include="MetadataSource\SearchSeriesComparer.cs" />
     <Compile Include="MetadataSource\SkyHook\SkyHookException.cs" />
+    <Compile Include="MetadataSource\Tmdb\Resource\MovieSearchResource.cs" />
+    <Compile Include="MetadataSource\Tmdb\TmdbProxy.cs" />
+    <Compile Include="MetadataSource\Tmdb\Resource\ImagesResource.cs" />
+    <Compile Include="MetadataSource\Tmdb\Resource\MovieResource.cs" />
     <Compile Include="Metadata\Consumers\MediaBrowser\MediaBrowserMetadata.cs" />
     <Compile Include="Metadata\Consumers\MediaBrowser\MediaBrowserMetadataSettings.cs" />
     <Compile Include="Metadata\Consumers\Roksbox\RoksboxMetadata.cs" />
@@ -724,11 +765,41 @@
     <Compile Include="Metadata\MetadataType.cs" />
     <Compile Include="MetadataSource\IProvideSeriesInfo.cs" />
     <Compile Include="MetadataSource\ISearchForNewSeries.cs" />
+    <Compile Include="Movies\Commands\MoveMovieCommand.cs" />
+    <Compile Include="Movies\Commands\RefreshMovieCommand.cs" />
+    <Compile Include="Movies\Events\MovieAddedEvent.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Movies\Events\MovieDeletedEvent.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Movies\Events\MovieUpdatedEvent.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Movies\Events\MovieRefreshStartingEvent.cs" />
+    <Compile Include="Movies\Events\MovieEditedEvent.cs" />
+    <Compile Include="Movies\Events\MovieMovedEvent.cs" />
+    <Compile Include="Movies\MoveMovieService.cs" />
+    <Compile Include="Movies\Movie.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Movies\MovieRepository.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Movies\MovieService.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Movies\RefreshMoviesService.cs" />
+    <Compile Include="Movies\MovieScannedHandler.cs" />
+    <Compile Include="Movies\MovieAddedHandler.cs" />
+    <Compile Include="Movies\MovieEditedService.cs" />
+    <Compile Include="Movies\ShouldRefreshMovie.cs" />
     <Compile Include="Notifications\Boxcar\Boxcar.cs" />
     <Compile Include="Notifications\Boxcar\BoxcarException.cs" />
     <Compile Include="Notifications\Boxcar\BoxcarProxy.cs" />
     <Compile Include="Notifications\Boxcar\BoxcarSettings.cs" />
     <Compile Include="Notifications\GrabMessage.cs" />
+    <Compile Include="Notifications\DownloadMovieMessage.cs" />
     <Compile Include="Notifications\Plex\Models\PlexIdentity.cs" />
     <Compile Include="Notifications\Plex\Models\PlexPreferences.cs" />
     <Compile Include="Notifications\Plex\Models\PlexSectionItem.cs" />
@@ -758,6 +829,9 @@
     <Compile Include="Notifications\Twitter\Twitter.cs" />
     <Compile Include="Notifications\Twitter\TwitterService.cs" />
     <Compile Include="Notifications\Twitter\TwitterSettings.cs" />
+    <Compile Include="Parser\Model\LocalMovie.cs" />
+    <Compile Include="Parser\Model\ParsedMovieInfo.cs" />
+    <Compile Include="Parser\Model\MovieTitleInfo.cs" />
     <Compile Include="Profiles\Delay\DelayProfile.cs" />
     <Compile Include="Profiles\Delay\DelayProfileService.cs" />
     <Compile Include="Profiles\Delay\DelayProfileTagInUseValidator.cs" />

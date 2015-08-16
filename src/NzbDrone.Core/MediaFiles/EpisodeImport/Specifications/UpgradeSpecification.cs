@@ -17,11 +17,23 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
 
         public Decision IsSatisfiedBy(LocalEpisode localEpisode)
         {
-            var qualityComparer = new QualityModelComparer(localEpisode.Series.Profile);
-            if (localEpisode.Episodes.Any(e => e.EpisodeFileId != 0 && qualityComparer.Compare(e.EpisodeFile.Value.Quality, localEpisode.Quality) > 0))
+            if (localEpisode.Series != null)
             {
-                _logger.Debug("This file isn't an upgrade for all episodes. Skipping {0}", localEpisode.Path);
-                return Decision.Reject("Not an upgrade for existing episode file(s)");
+                var qualityComparer = new QualityModelComparer(localEpisode.Series.Profile);
+                if (localEpisode.Episodes.Any(e => e.EpisodeFileId != 0 && qualityComparer.Compare(e.EpisodeFile.Value.Quality, localEpisode.Quality) > 0))
+                {
+                    _logger.Debug("This file isn't an upgrade for all episodes. Skipping {0}", localEpisode.Path);
+                    return Decision.Reject("Not an upgrade for existing episode file(s)");
+                }
+            }
+            else
+            {
+                var qualityComparer = new QualityModelComparer(localEpisode.Movie.Profile);
+                if (localEpisode.Movie.MovieFileId != 0 && qualityComparer.Compare(localEpisode.Movie.MovieFile.Value.Quality, localEpisode.Quality) > 0)
+                {
+                    _logger.Debug("This file isn't an upgrade for the movie. Skipping {0}", localEpisode.Path);
+                    return Decision.Reject("Not an upgrade for existing movie file(s)");
+                }
             }
 
             return Decision.Accept();
