@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
-using System.Web;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
+using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource.SkyHook.Resource;
 using NzbDrone.Core.Tv;
@@ -31,8 +30,23 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
         {
             var httpRequest = _requestBuilder.Build(tvdbSeriesId.ToString());
             httpRequest.AddSegment("route", "shows");
+            httpRequest.AllowAutoRedirect = true;
+            httpRequest.SuppressHttpError = true;
 
             var httpResponse = _httpClient.Get<ShowResource>(httpRequest);
+
+            if (httpResponse.HasHttpError)
+            {
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    throw new SeriesNotFoundException(tvdbSeriesId);
+                }
+                else
+                {
+                    throw new HttpException(httpRequest, httpResponse);
+                }
+            }
+
             var episodes = httpResponse.Resource.Episodes.Select(MapEpisode);
             var series = MapSeries(httpResponse.Resource);
 
@@ -60,18 +74,13 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
                     {
                         return new List<Series> { GetSeriesInfo(tvdbId).Item1 };
                     }
-                    catch (Common.Http.HttpException ex)
+                    catch (SeriesNotFoundException)
                     {
-                        if (ex.Response.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            return new List<Series>();
-                        }
-
-                        throw;
+                        return new List<Series>();
                     }
                 }
 
-                var term = HttpUtility.UrlEncode((title.ToLower().Trim()));
+                var term = System.Web.HttpUtility.UrlEncode((title.ToLower().Trim()));
                 var httpRequest = _requestBuilder.Build("?term={term}");
                 httpRequest.AddSegment("route", "search");
                 httpRequest.AddSegment("term", term);
@@ -80,7 +89,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
                 return httpResponse.Resource.SelectList(MapSeries);
             }
-            catch (Common.Http.HttpException)
+            catch (HttpException)
             {
                 throw new SkyHookException("Search for '{0}' failed. Unable to communicate with SkyHook.", title);
             }
