@@ -1,11 +1,9 @@
-﻿using Marr.Data.QGen;
-using NzbDrone.Core.Datastore;
-using NzbDrone.Core.Messaging.Events;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
+using Marr.Data.QGen;
+using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Datastore.Extensions;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Movies
@@ -48,12 +46,12 @@ namespace NzbDrone.Core.Movies
 
         public Movie FindByImdbId(string ImdbId)
         {
-            return Query.SingleOrDefault(s=>s.ImdbId.Equals(ImdbId));
+            return Query.SingleOrDefault(s => s.ImdbId.Equals(ImdbId));
         }
 
         public Movie FindByTmdbId(string TmbdId)
         {
-            return Query.SingleOrDefault(s=>s.TmdbId.Equals(TmbdId));
+            return Query.SingleOrDefault(s => s.TmdbId.Equals(TmbdId));
         }
 
         public Movie GetMovieByFileId(int fileId)
@@ -93,7 +91,7 @@ namespace NzbDrone.Core.Movies
 
         private string BuildAirDateUtcCutoffWhereClause(DateTime currentTime)
         {
-            return String.Format("WHERE datetime(strftime('%s', [t0].[ReleaseDate]) + [t1].[RunTime] * 60,  'unixepoch') <= '{0}'",
+            return String.Format("WHERE datetime(strftime('%s', [t0].[ReleaseDate]),  'unixepoch') <= '{0}'",
                                  currentTime.ToString("yyyy-MM-dd HH:mm:ss"));
         }
 

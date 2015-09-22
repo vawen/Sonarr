@@ -30,8 +30,8 @@ module.exports = Marionette.Layout.extend({
         missing       : '#x-missing',
         toolbar       : '#x-toolbar',
         pager         : '#x-pager',
-        missingMovies : 'x-missing-movies',
-        pagerMovies   : 'x-pager-movies'
+        missingMovies : '#x-missing-movies',
+        pagerMovies   : '#x-pager-movies'
     },
 
     ui : {
@@ -84,40 +84,43 @@ module.exports = Marionette.Layout.extend({
             sortable   : false
         },
         {
-            name  : 'movie',
-            label : 'Movie',
-            cell  : MovieTitleCell,
+            name      : 'title',
+            label     : 'Title',
+            cell      : MovieTitleCell,
+            cellValue : 'this',
             sortValue : 'sortTitle'
         },
         {
-            name     : 'movie',
+            name     : 'this',
             label    : 'Original Title',
             cell     : OriginalTitleMovieCell,
             sortable : false
         },
         {
+            name  : 'releaseDate',
+            label : 'Release Date',
+            cell  : 'date'
+        },
+        {
             name  : 'profileId',
             label : 'Profile',
             cell  : ProfileCell
-        },
-        {
-            name     : 'status',
-            label    : 'Status',
-            cell     : EpisodeStatusCell,
-            sortable : false
         }
     ],
 
     initialize : function() {
         this.collection = new MissingCollection().bindSignalR({ updateOnly : true });
+        this.movieCollection = new MissingMovieCollection().bindSignalR({ updateOnly : true });
 
         this.listenTo(this.collection, 'sync', this._showTable);
+        this.listenTo(this.movieCollection, 'sync', this._showMovieTable);
     },
 
     onShow : function() {
         this.missing.show(new LoadingView());
         this._showToolbar();
         this.collection.fetch();
+        this.movieCollection.fetch();
     },
 
     _showTable : function() {
@@ -132,6 +135,21 @@ module.exports = Marionette.Layout.extend({
         this.pager.show(new GridPager({
             columns    : this.columns,
             collection : this.collection
+        }));
+    },
+
+    _showMovieTable : function() {
+        this.missingMovieGrid = new Backgrid.Grid({
+            columns    : this.columnsMovies,
+            collection : this.movieCollection,
+            className  : 'table table-hover'
+        });
+
+        this.missingMovies.show(this.missingMovieGrid);
+
+        this.pagerMovies.show(new GridPager({
+            columns    : this.columnsMovies,
+            collection : this.movieCollection
         }));
     },
 

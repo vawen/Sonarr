@@ -97,6 +97,8 @@
     <Compile Include="ClientSchema\SelectOption.cs" />
     <Compile Include="Commands\CommandModule.cs" />
     <Compile Include="Commands\CommandResource.cs" />
+    <Compile Include="ManualImport\ManualImportModule.cs" />
+    <Compile Include="ManualImport\ManualImportResource.cs" />
     <Compile Include="MovieFiles\MovieFileModule.cs" />
     <Compile Include="MovieFiles\MovieFileResource.cs" />
     <Compile Include="Extensions\AccessControlHeaders.cs" />
