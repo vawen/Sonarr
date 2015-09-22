@@ -645,6 +645,11 @@
     <Compile Include="MediaFiles\Events\MovieFolderCreatedEvent.cs" />
     <Compile Include="MediaFiles\Events\MovieImportedEvent.cs" />
     <Compile Include="MediaFiles\Events\MovieRenamedEvent.cs" />
+    <Compile Include="MediaFiles\Imports\Manual\ManualImportCommand.cs" />
+    <Compile Include="MediaFiles\Imports\Manual\ManualImportFile.cs" />
+    <Compile Include="MediaFiles\Imports\Manual\ManualImportItem.cs" />
+    <Compile Include="MediaFiles\Imports\Manual\ManualImportService.cs" />
+    <Compile Include="MediaFiles\Imports\Manual\ManuallyImportedFile.cs" />
     <Compile Include="MediaFiles\Imports\Specifications\IImportSeriesDecisionEngineSpecification.cs" />
     <Compile Include="MediaFiles\Events\MovieFileAddedEvent.cs" />
     <Compile Include="MediaFiles\Events\MovieFileDeletedEvent.cs" />

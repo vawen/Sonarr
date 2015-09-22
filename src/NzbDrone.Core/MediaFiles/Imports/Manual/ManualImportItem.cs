@@ -11,7 +11,7 @@ namespace NzbDrone.Core.MediaFiles.Imports.Manual
         public string RelativePath { get; set; }
         public string Name { get; set; }
         public long Size { get; set; }
-        public Series Series { get; set; }
+        public Tv.Series Series { get; set; }
         public int? SeasonNumber { get; set; }
         public List<Episode> Episodes { get; set; }
         public QualityModel Quality { get; set; }

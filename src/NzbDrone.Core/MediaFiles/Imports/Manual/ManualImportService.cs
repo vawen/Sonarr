@@ -1,21 +1,20 @@
-﻿using NLog;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.TrackedDownloads;
-using NzbDrone.Core.MediaFiles.Common;
-using NzbDrone.Core.MediaFiles.Common.MediaInfo;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 namespace NzbDrone.Core.MediaFiles.Imports.Manual
 {
@@ -35,7 +34,7 @@ namespace NzbDrone.Core.MediaFiles.Imports.Manual
         private readonly IVideoFileInfoReader _videoFileInfoReader;
         private readonly IImportApprovedItems _importApprovedItems;
         private readonly ITrackedDownloadService _trackedDownloadService;
-        private readonly IDownloadedEpisodesImportService _downloadedEpisodesImportService;
+        private readonly IDownloadedMediaImportService _downloadedEpisodesImportService;
         private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
 
@@ -48,7 +47,7 @@ namespace NzbDrone.Core.MediaFiles.Imports.Manual
                                    IVideoFileInfoReader videoFileInfoReader,
                                    IImportApprovedItems importApprovedItems,
                                    ITrackedDownloadService trackedDownloadService,
-                                   IDownloadedEpisodesImportService downloadedEpisodesImportService,
+                                   IDownloadedMediaImportService downloadedEpisodesImportService,
                                    IEventAggregator eventAggregator,
                                    Logger logger)
         {
@@ -143,7 +142,7 @@ namespace NzbDrone.Core.MediaFiles.Imports.Manual
                 return MapItem(new ImportDecision(localEpisode, new Rejection("Unknown Series")), folder, downloadId);
             }
 
-            var importDecisions = _importDecisionMaker.GetImportDecisions(new List<string> {file},
+            var importDecisions = _importDecisionMaker.GetImportDecisions(new List<string> { file },
                 series, null, SceneSource(series, folder));
 
             return importDecisions.Any() ? MapItem(importDecisions.First(), folder, downloadId) : null;
@@ -191,7 +190,7 @@ namespace NzbDrone.Core.MediaFiles.Imports.Manual
             for (int i = 0; i < message.Files.Count; i++)
             {
                 _logger.ProgressTrace("Processing file {0} of {1}", i + 1, message.Files.Count);
-                
+
                 var file = message.Files[i];
                 var series = _seriesService.GetSeries(file.SeriesId);
                 var episodes = _episodeService.GetEpisodes(file.EpisodeIds);
@@ -218,7 +217,7 @@ namespace NzbDrone.Core.MediaFiles.Imports.Manual
 
                 if (file.DownloadId.IsNullOrWhiteSpace())
                 {
-                    imported.AddRange(_importApprovedEpisodes.Import(new List<ImportDecision> { importDecision }, !existingFile));                    
+                    imported.AddRange(_importApprovedEpisodes.Import(new List<ImportDecision> { importDecision }, !existingFile));
                 }
 
                 else
