@@ -249,6 +249,7 @@
     <Compile Include="Validation\RuleBuilderExtensions.cs" />
     <Compile Include="Wanted\CutoffModule.cs" />
     <Compile Include="Wanted\LegacyMissingModule.cs" />
+    <Compile Include="Wanted\MissingMovieModule.cs" />
     <Compile Include="Wanted\MissingModule.cs" />
   </ItemGroup>
   <ItemGroup>

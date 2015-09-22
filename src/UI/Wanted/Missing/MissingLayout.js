@@ -4,12 +4,16 @@ var vent = require('../../vent');
 var Marionette = require('marionette');
 var Backgrid = require('backgrid');
 var MissingCollection = require('./MissingCollection');
+var MissingMovieCollection = require('./MissingMovieCollection');
 var SelectAllCell = require('../../Cells/SelectAllCell');
 var SeriesTitleCell = require('../../Cells/SeriesTitleCell');
 var EpisodeNumberCell = require('../../Cells/EpisodeNumberCell');
 var EpisodeTitleCell = require('../../Cells/EpisodeTitleCell');
 var RelativeDateCell = require('../../Cells/RelativeDateCell');
 var EpisodeStatusCell = require('../../Cells/EpisodeStatusCell');
+var MovieTitleCell = require('../../Cells/MovieTitleCell');
+var OriginalTitleMovieCell = require('../../Cells/OriginalTitleMovieCell');
+var ProfileCell = require('../../Cells/ProfileCell');
 var GridPager = require('../../Shared/Grid/Pager');
 var ToolbarLayout = require('../../Shared/Toolbar/ToolbarLayout');
 var LoadingView = require('../../Shared/LoadingView');
@@ -23,9 +27,11 @@ module.exports = Marionette.Layout.extend({
     template : 'Wanted/Missing/MissingLayoutTemplate',
 
     regions : {
-        missing : '#x-missing',
-        toolbar : '#x-toolbar',
-        pager   : '#x-pager'
+        missing       : '#x-missing',
+        toolbar       : '#x-toolbar',
+        pager         : '#x-pager',
+        missingMovies : 'x-missing-movies',
+        pagerMovies   : 'x-pager-movies'
     },
 
     ui : {
@@ -61,6 +67,38 @@ module.exports = Marionette.Layout.extend({
             name  : 'airDateUtc',
             label : 'Air Date',
             cell  : RelativeDateCell
+        },
+        {
+            name     : 'status',
+            label    : 'Status',
+            cell     : EpisodeStatusCell,
+            sortable : false
+        }
+    ],
+
+    columnsMovies : [
+        {
+            name       : '',
+            cell       : SelectAllCell,
+            headerCell : 'select-all',
+            sortable   : false
+        },
+        {
+            name  : 'movie',
+            label : 'Movie',
+            cell  : MovieTitleCell,
+            sortValue : 'sortTitle'
+        },
+        {
+            name     : 'movie',
+            label    : 'Original Title',
+            cell     : OriginalTitleMovieCell,
+            sortable : false
+        },
+        {
+            name  : 'profileId',
+            label : 'Profile',
+            cell  : ProfileCell
         },
         {
             name     : 'status',

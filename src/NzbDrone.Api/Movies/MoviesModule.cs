@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using FluentValidation;
 using NzbDrone.Api.Mapping;
 using NzbDrone.Api.Validation;
+using NzbDrone.Core.Datastore.Events;
+using NzbDrone.Core.Download;
 using NzbDrone.Core.MediaCover;
-using NzbDrone.Core.Movies;
-using NzbDrone.Core.Validation.Paths;
-using NzbDrone.SignalR;
+using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
-using NzbDrone.Core.Datastore.Events;
+using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Events;
-using NzbDrone.Core.Download;
-using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Validation.Paths;
+using NzbDrone.SignalR;
 
 namespace NzbDrone.Api.Movies
 {
@@ -26,14 +26,38 @@ namespace NzbDrone.Api.Movies
                                 IHandle<MovieRenamedEvent>,
                                 IHandle<MovieGrabbedEvent>
     {
-        private readonly IMovieService _movieService;
+        protected readonly IMovieService _movieService;
         private readonly IMapCoversToLocal _coverMapper;
 
-        public MoviesModule(IBroadcastSignalRMessage signalRBroadcaster, 
-                            IMovieService movieService, 
+        public MoviesModule(IBroadcastSignalRMessage signalRBroadcaster,
+                            IMovieService movieService,
                             IMapCoversToLocal coverMapper
             )
             : base(signalRBroadcaster, "movies")
+        {
+            _movieService = movieService;
+            _coverMapper = coverMapper;
+            GetResourceAll = GetAllMovies;
+            GetResourceById = GetMovie;
+            CreateResource = AddMovie;
+            UpdateResource = UpdateMovie;
+            DeleteResource = DeleteMovie;
+
+            SharedValidator.RuleFor(s => s.ProfileId).ValidId();
+
+            PutValidator.RuleFor(s => s.Path).IsValidPath();
+
+            PostValidator.RuleFor(s => s.Path).IsValidPath().When(s => String.IsNullOrEmpty(s.RootFolderPath));
+            PostValidator.RuleFor(s => s.RootFolderPath).IsValidPath().When(s => String.IsNullOrEmpty(s.Path));
+            PostValidator.RuleFor(s => s.Title).NotEmpty();
+        }
+
+        public MoviesModule(IBroadcastSignalRMessage signalRBroadcaster,
+                            IMovieService movieService,
+                            IMapCoversToLocal coverMapper,
+                            string resource
+            )
+            : base(signalRBroadcaster, resource)
         {
             _movieService = movieService;
             _coverMapper = coverMapper;
@@ -61,7 +85,7 @@ namespace NzbDrone.Api.Movies
             {
                 deleteFiles = Convert.ToBoolean(deleteFilesQuery.Value);
             }
-            _movieService.DeleteMove(id,deleteFiles);
+            _movieService.DeleteMove(id, deleteFiles);
         }
 
         private void UpdateMovie(MoviesResource moviesResource)
@@ -93,7 +117,7 @@ namespace NzbDrone.Api.Movies
         {
             foreach (var moviesResource in resource)
             {
-                _coverMapper.ConvertToLocalUrls(moviesResource.Id,moviesResource.Images);
+                _coverMapper.ConvertToLocalUrls(moviesResource.Id, moviesResource.Images);
             }
         }
 
