@@ -26,16 +26,19 @@ namespace NzbDrone.Core.Parser
     {
         private readonly IEpisodeService _episodeService;
         private readonly ISeriesService _seriesService;
+        private readonly IParseProvider _parseProvider;
         private readonly ISceneMappingService _sceneMappingService;
         private readonly Logger _logger;
 
         public ParsingService(IEpisodeService episodeService,
                               ISeriesService seriesService,
                               ISceneMappingService sceneMappingService,
+                              IParseProvider parseProvider,
                               Logger logger)
         {
             _episodeService = episodeService;
             _seriesService = seriesService;
+            _parseProvider = parseProvider;
             _sceneMappingService = sceneMappingService;
             _logger = logger;
         }
@@ -57,7 +60,7 @@ namespace NzbDrone.Core.Parser
 
             else
             {
-                parsedEpisodeInfo = Parser.ParsePath(filename);
+                parsedEpisodeInfo = _parseProvider.ParsePath(filename);
             }
 
             if (parsedEpisodeInfo == null || parsedEpisodeInfo.IsPossibleSpecialEpisode)
@@ -91,7 +94,7 @@ namespace NzbDrone.Core.Parser
 
         public Series GetSeries(string title)
         {
-            var parsedEpisodeInfo = Parser.ParseTitle(title);
+            var parsedEpisodeInfo = _parseProvider.ParseTitle(title);
 
             if (parsedEpisodeInfo == null)
             {
@@ -210,7 +213,7 @@ namespace NzbDrone.Core.Parser
                     {
                         episode = _episodeService.FindEpisode(series.Id, absoluteEpisodeNumber);
                     }
-                   
+
                     if (episode != null)
                     {
                         _logger.Debug("Using absolute episode number {0} for: {1} - TVDB: {2}x{3:00}",
@@ -340,8 +343,8 @@ namespace NzbDrone.Core.Parser
                 info.EpisodeNumbers = new int[1] { episode.EpisodeNumber };
                 info.FullSeason = false;
                 info.Quality = QualityParser.ParseQuality(title);
-                info.ReleaseGroup = Parser.ParseReleaseGroup(title);
-                info.Language = Parser.ParseLanguage(title);
+                info.ReleaseGroup = _parseProvider.ParseReleaseGroup(title);
+                info.Language = _parseProvider.ParseLanguage(title);
                 info.Special = true;
 
                 _logger.Debug("Found special episode {0} for title '{1}'", info, title);

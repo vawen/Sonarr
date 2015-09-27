@@ -1,17 +1,26 @@
 using System;
+using System.Collections.Generic;
 using FluentAssertions;
+using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Expansive;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Analizers;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 
-namespace NzbDrone.Core.Test.ParserTests
+namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
-    public class DailyEpisodeParserFixture : CoreTest<ParseProvider>
+    public class DailyEpisodeParserFixture : CoreTest<NewParseProvider>
     {
+        [SetUp]
+        public void Setup()
+        {
+            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+        }
+
         [TestCase("Conan 2011 04 18 Emma Roberts HDTV XviD BFF", "Conan", 2011, 04, 18)]
         [TestCase("The Tonight Show With Jay Leno 2011 04 15 1080i HDTV DD5 1 MPEG2 TrollHD", "The Tonight Show With Jay Leno", 2011, 04, 15)]
         [TestCase("The.Daily.Show.2010.10.11.Johnny.Knoxville.iTouch-MW", "The Daily Show", 2010, 10, 11)]
@@ -31,6 +40,11 @@ namespace NzbDrone.Core.Test.ParserTests
         //[TestCase("", "", 0, 0, 0)]
         public void should_parse_daily_episode(string postTitle, string title, int year, int month, int day)
         {
+            var _title = title.NormalizeTitle();
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Daily });
+
             var result = Subject.ParseTitle(postTitle);
             var airDate = new DateTime(year, month, day);
             result.Should().NotBeNull();

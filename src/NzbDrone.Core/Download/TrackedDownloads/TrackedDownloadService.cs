@@ -5,7 +5,6 @@ using NzbDrone.Common.Cache;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Download.TrackedDownloads
 {
@@ -19,16 +18,19 @@ namespace NzbDrone.Core.Download.TrackedDownloads
     {
         private readonly IParsingService _parsingService;
         private readonly IHistoryService _historyService;
+        private readonly IParseProvider _parseProvider;
         private readonly Logger _logger;
         private readonly ICached<TrackedDownload> _cache;
 
         public TrackedDownloadService(IParsingService parsingService,
             ICacheManager cacheManager,
             IHistoryService historyService,
+            IParseProvider parseProvider,
             Logger logger)
         {
             _parsingService = parsingService;
             _historyService = historyService;
+            _parseProvider = parseProvider;
             _cache = cacheManager.GetCache<TrackedDownload>(GetType());
             _logger = logger;
         }
@@ -57,7 +59,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
 
             try
             {
-                var parsedEpisodeInfo = Parser.Parser.ParseTitle(trackedDownload.DownloadItem.Title);
+                var parsedEpisodeInfo = _parseProvider.ParseTitle(trackedDownload.DownloadItem.Title);
                 var historyItems = _historyService.FindByDownloadId(downloadItem.DownloadId);
 
                 if (parsedEpisodeInfo != null)
@@ -75,7 +77,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                         trackedDownload.RemoteEpisode.Series == null ||
                         trackedDownload.RemoteEpisode.Episodes.Empty())
                     {
-                        parsedEpisodeInfo = Parser.Parser.ParseTitle(firstHistoryItem.SourceTitle);
+                        parsedEpisodeInfo = _parseProvider.ParseTitle(firstHistoryItem.SourceTitle);
                         if (parsedEpisodeInfo != null)
                         {
                             trackedDownload.RemoteEpisode = _parsingService.Map(parsedEpisodeInfo, firstHistoryItem.SeriesId, historyItems.Where(v => v.EventType == HistoryEventType.Grabbed).Select(h => h.EpisodeId).Distinct());

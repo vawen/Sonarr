@@ -1,18 +1,20 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
     [TestFixture]
-    public class IsPossibleSpecialEpisodeFixture
+    public class IsPossibleSpecialEpisodeFixture : CoreTest<ParseProvider>
     {
         [Test]
         public void should_not_treat_files_without_a_series_title_as_a_special()
         {
             var parsedEpisodeInfo = new ParsedEpisodeInfo
                                     {
-                                        EpisodeNumbers = new[]{ 7 },
+                                        EpisodeNumbers = new[] { 7 },
                                         SeasonNumber = 1,
                                         SeriesTitle = ""
                                     };
@@ -37,7 +39,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Rookie.Blue.Behind.the.Badge.S05.Special.HDTV.x264-2HD")]
         public void IsPossibleSpecialEpisode_should_be_true(string title)
         {
-            Parser.Parser.ParseTitle(title).IsPossibleSpecialEpisode.Should().BeTrue();
+            Subject.ParseTitle(title).IsPossibleSpecialEpisode.Should().BeTrue();
         }
     }
 }

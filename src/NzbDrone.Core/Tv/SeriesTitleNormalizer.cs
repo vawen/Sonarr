@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Tv
 {
@@ -19,7 +20,7 @@ namespace NzbDrone.Core.Tv
                 return PreComputedTitles[tvdbId];
             }
 
-            return Parser.Parser.NormalizeTitle(title).ToLower();
+            return title.NormalizeTitle().ToLower();
         }
     }
 }

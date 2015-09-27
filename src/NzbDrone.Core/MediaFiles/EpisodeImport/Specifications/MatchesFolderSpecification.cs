@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using NLog;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
@@ -10,10 +11,12 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
     public class MatchesFolderSpecification : IImportDecisionEngineSpecification
     {
         private readonly Logger _logger;
+        private readonly IParseProvider _parseProvider;
 
-        public MatchesFolderSpecification(Logger logger)
+        public MatchesFolderSpecification(Logger logger, IParseProvider parseProvider)
         {
             _logger = logger;
+            _parseProvider = parseProvider;
         }
         public Decision IsSatisfiedBy(LocalEpisode localEpisode)
         {
@@ -29,7 +32,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Specifications
                 return Decision.Accept();
             }
 
-            var folderInfo = Parser.Parser.ParseTitle(dirInfo.Name);
+            var folderInfo = _parseProvider.ParseTitle(dirInfo.Name);
 
             if (folderInfo == null)
             {

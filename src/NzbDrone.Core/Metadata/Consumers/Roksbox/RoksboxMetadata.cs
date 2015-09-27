@@ -12,6 +12,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Metadata.Files;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Metadata.Consumers.Roksbox
@@ -20,14 +21,17 @@ namespace NzbDrone.Core.Metadata.Consumers.Roksbox
     {
         private readonly IMapCoversToLocal _mediaCoverService;
         private readonly IDiskProvider _diskProvider;
+        private readonly IParseProvider _parseProvider;
         private readonly Logger _logger;
 
         public RoksboxMetadata(IMapCoversToLocal mediaCoverService,
                             IDiskProvider diskProvider,
+                            IParseProvider parseProvider,
                             Logger logger)
         {
             _mediaCoverService = mediaCoverService;
             _diskProvider = diskProvider;
+            _parseProvider = parseProvider;
             _logger = logger;
         }
 
@@ -127,7 +131,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Roksbox
                 return metadata;
             }
 
-            var parseResult = Parser.Parser.ParseTitle(filename);
+            var parseResult = _parseProvider.ParseTitle(filename);
 
             if (parseResult != null &&
                 !parseResult.FullSeason)
@@ -147,7 +151,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Roksbox
                         metadata.Type = MetadataType.EpisodeImage;
                         return metadata;
                     }
-                }                
+                }
             }
 
             return null;
@@ -165,7 +169,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Roksbox
             {
                 return null;
             }
-            
+
             _logger.Debug("Generating Episode Metadata for: {0}", episodeFile.RelativePath);
 
             var xmlResult = String.Empty;
@@ -212,7 +216,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Roksbox
             var source = _mediaCoverService.GetCoverPath(series.Id, image.CoverType);
             var destination = Path.Combine(series.Path, Path.GetFileName(series.Path) + Path.GetExtension(source));
 
-            return new List<ImageFileResult>{ new ImageFileResult(destination, source) };
+            return new List<ImageFileResult> { new ImageFileResult(destination, source) };
         }
 
         public override List<ImageFileResult> SeasonImages(Series series, Season season)
@@ -250,7 +254,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Roksbox
                 return new List<ImageFileResult>();
             }
 
-            return new List<ImageFileResult> {new ImageFileResult(GetEpisodeImageFilename(episodeFile.RelativePath), screenshot.Url)};
+            return new List<ImageFileResult> { new ImageFileResult(GetEpisodeImageFilename(episodeFile.RelativePath), screenshot.Url) };
         }
 
         private string GetEpisodeMetadataFilename(string episodeFilePath)

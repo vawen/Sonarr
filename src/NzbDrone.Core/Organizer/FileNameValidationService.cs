@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FluentValidation.Results;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
 
@@ -16,18 +17,24 @@ namespace NzbDrone.Core.Organizer
     public class FileNameValidationService : IFilenameValidationService
     {
         private const string ERROR_MESSAGE = "Produces invalid file names";
+        private readonly IParseProvider _parseProvider;
+
+        public FileNameValidationService(IParseProvider parseProvider)
+        {
+            _parseProvider = parseProvider;
+        }
 
         public ValidationFailure ValidateStandardFilename(SampleResult sampleResult)
         {
             var validationFailure = new ValidationFailure("StandardEpisodeFormat", ERROR_MESSAGE);
-            var parsedEpisodeInfo = Parser.Parser.ParseTitle(sampleResult.FileName);
+            var parsedEpisodeInfo = _parseProvider.ParseTitle(sampleResult.FileName);
 
             if (parsedEpisodeInfo == null)
             {
                 return validationFailure;
             }
 
-            if (!ValidateSeasonAndEpisodeNumbers(sampleResult.Episodes, parsedEpisodeInfo))
+            if (!ValidateSeasonNumbers(sampleResult.Episodes, parsedEpisodeInfo))
             {
                 return validationFailure;
             }
@@ -38,7 +45,7 @@ namespace NzbDrone.Core.Organizer
         public ValidationFailure ValidateDailyFilename(SampleResult sampleResult)
         {
             var validationFailure = new ValidationFailure("DailyEpisodeFormat", ERROR_MESSAGE);
-            var parsedEpisodeInfo = Parser.Parser.ParseTitle(sampleResult.FileName);
+            var parsedEpisodeInfo = _parseProvider.ParseTitle(sampleResult.FileName);
 
             if (parsedEpisodeInfo == null)
             {
@@ -55,7 +62,7 @@ namespace NzbDrone.Core.Organizer
                 return null;
             }
 
-            if (!ValidateSeasonAndEpisodeNumbers(sampleResult.Episodes, parsedEpisodeInfo))
+            if (!ValidateSeasonNumbers(sampleResult.Episodes, parsedEpisodeInfo))
             {
                 return validationFailure;
             }
@@ -66,7 +73,7 @@ namespace NzbDrone.Core.Organizer
         public ValidationFailure ValidateAnimeFilename(SampleResult sampleResult)
         {
             var validationFailure = new ValidationFailure("AnimeEpisodeFormat", ERROR_MESSAGE);
-            var parsedEpisodeInfo = Parser.Parser.ParseTitle(sampleResult.FileName);
+            var parsedEpisodeInfo = _parseProvider.ParseTitle(sampleResult.FileName);
 
             if (parsedEpisodeInfo == null)
             {
@@ -83,7 +90,7 @@ namespace NzbDrone.Core.Organizer
                 return null;
             }
 
-            if (!ValidateSeasonAndEpisodeNumbers(sampleResult.Episodes, parsedEpisodeInfo))
+            if (!ValidateSeasonNumbers(sampleResult.Episodes, parsedEpisodeInfo))
             {
                 return validationFailure;
             }
@@ -91,7 +98,7 @@ namespace NzbDrone.Core.Organizer
             return null;
         }
 
-        private bool ValidateSeasonAndEpisodeNumbers(List<Episode> episodes, ParsedEpisodeInfo parsedEpisodeInfo)
+        private bool ValidateSeasonNumbers(List<Episode> episodes, ParsedEpisodeInfo parsedEpisodeInfo)
         {
             if (parsedEpisodeInfo.SeasonNumber != episodes.First().SeasonNumber ||
                 !parsedEpisodeInfo.EpisodeNumbers.OrderBy(e => e).SequenceEqual(episodes.Select(e => e.EpisodeNumber).OrderBy(e => e)))

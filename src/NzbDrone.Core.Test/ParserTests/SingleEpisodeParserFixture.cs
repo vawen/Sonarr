@@ -1,13 +1,14 @@
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
 
     [TestFixture]
-    public class SingleEpisodeParserFixture : CoreTest
+    public class SingleEpisodeParserFixture : CoreTest<ParseProvider>
     {
         [TestCase("Sonny.With.a.Chance.S02E15", "Sonny With a Chance", 2, 15)]
         [TestCase("Two.and.a.Half.Me.103.720p.HDTV.X264-DIMENSION", "Two and a Half Me", 1, 3)]
@@ -114,7 +115,7 @@ namespace NzbDrone.Core.Test.ParserTests
         //[TestCase("", "", 0, 0)]
         public void should_parse_single_episode(string postTitle, string title, int seasonNumber, int episodeNumber)
         {
-            var result = Parser.Parser.ParseTitle(postTitle);
+            var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();
             result.EpisodeNumbers.Should().HaveCount(1);
             result.SeasonNumber.Should().Be(seasonNumber);

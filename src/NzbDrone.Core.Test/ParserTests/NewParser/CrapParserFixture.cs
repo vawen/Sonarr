@@ -1,17 +1,28 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Analizers;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
-namespace NzbDrone.Core.Test.ParserTests
+namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
-    public class CrapParserFixture : CoreTest<ParseProvider>
+    public class CrapParserFixture : CoreTest<NewParseProvider>
     {
+        [SetUp]
+        public void Setup()
+        {
+            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+            /*Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.IsAny<string>()))
+                .Returns(null);*/
+        }
+
         [TestCase("76El6LcgLzqb426WoVFg1vVVVGx4uCYopQkfjmLe")]
         [TestCase("Vrq6e1Aba3U amCjuEgV5R2QvdsLEGYF3YQAQkw8")]
         [TestCase("TDAsqTea7k4o6iofVx3MQGuDK116FSjPobMuh8oB")]

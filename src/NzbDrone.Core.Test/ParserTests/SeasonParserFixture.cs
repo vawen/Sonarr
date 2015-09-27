@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
 
     [TestFixture]
-    public class SeasonParserFixture : CoreTest
+    public class SeasonParserFixture : CoreTest<ParseProvider>
     {
         [TestCase("30.Rock.Season.04.HDTV.XviD-DIMENSION", "30 Rock", 4)]
         [TestCase("Parks.and.Recreation.S02.720p.x264-DIMENSION", "Parks and Recreation", 2)]
@@ -26,7 +27,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("My.Series.S2014.720p.HDTV.x264-ME", "My Series", 2014)]
         public void should_parse_full_season_release(string postTitle, string title, int season)
         {
-            var result = Parser.Parser.ParseTitle(postTitle);
+            var result = Subject.ParseTitle(postTitle);
             result.SeasonNumber.Should().Be(season);
             result.SeriesTitle.Should().Be(title);
             result.EpisodeNumbers.Should().BeEmpty();
@@ -39,7 +40,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Instant Star S03 EXTRAS DVDRip XviD OSiTV")]
         public void should_parse_season_extras(string postTitle)
         {
-            var result = Parser.Parser.ParseTitle(postTitle);
+            var result = Subject.ParseTitle(postTitle);
 
             result.Should().BeNull();
         }
@@ -49,7 +50,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("CSI.S11.SUBPACK.DVDRip.XviD-REWARD")]
         public void should_parse_season_subpack(string postTitle)
         {
-            var result = Parser.Parser.ParseTitle(postTitle);
+            var result = Subject.ParseTitle(postTitle);
 
             result.Should().BeNull();
         }

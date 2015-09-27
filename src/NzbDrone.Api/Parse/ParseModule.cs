@@ -6,10 +6,12 @@ namespace NzbDrone.Api.Parse
     public class ParseModule : NzbDroneRestModule<ParseResource>
     {
         private readonly IParsingService _parsingService;
+        private readonly IParseProvider _parseProvider;
 
-        public ParseModule(IParsingService parsingService)
+        public ParseModule(IParsingService parsingService, IParseProvider parseProvider)
         {
             _parsingService = parsingService;
+            _parseProvider = parseProvider;
 
             GetResourceSingle = Parse;
         }
@@ -17,7 +19,7 @@ namespace NzbDrone.Api.Parse
         private ParseResource Parse()
         {
             var title = Request.Query.Title.Value;
-            var parsedEpisodeInfo = Parser.ParseTitle(title);
+            var parsedEpisodeInfo = _parseProvider.ParseTitle(title);
 
             if (parsedEpisodeInfo == null)
             {

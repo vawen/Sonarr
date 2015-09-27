@@ -272,6 +272,10 @@
     <Compile Include="OrganizerTests\FileNameBuilderTests\EpisodeTitleCollapseFixture.cs" />
     <Compile Include="OrganizerTests\FileNameBuilderTests\MultiEpisodeFixture.cs" />
     <Compile Include="ParserTests\MiniSeriesEpisodeParserFixture.cs" />
+    <Compile Include="ParserTests\NewParser\AbsoluteEpisodeNumberParserFixture.cs" />
+    <Compile Include="ParserTests\NewParser\AnimeMetadataParserFixture.cs" />
+    <Compile Include="ParserTests\NewParser\CrapParserFixture.cs" />
+    <Compile Include="ParserTests\NewParser\DailyEpisodeParserFixture.cs" />
     <Compile Include="Qualities\RevisionComparableFixture.cs" />
     <Compile Include="QueueTests\QueueServiceFixture.cs" />
     <Compile Include="RemotePathMappingsTests\RemotePathMappingServiceFixture.cs" />

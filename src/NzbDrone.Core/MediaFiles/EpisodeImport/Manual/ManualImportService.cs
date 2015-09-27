@@ -12,10 +12,8 @@ using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
-using NzbDrone.Core.MetadataSource.SkyHook.Resource;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
-using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
@@ -29,6 +27,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
     {
         private readonly IDiskProvider _diskProvider;
         private readonly IParsingService _parsingService;
+        private readonly IParseProvider _parseProvider;
         private readonly IDiskScanService _diskScanService;
         private readonly IMakeImportDecision _importDecisionMaker;
         private readonly ISeriesService _seriesService;
@@ -42,6 +41,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
 
         public ManualImportService(IDiskProvider diskProvider,
                                    IParsingService parsingService,
+                                   IParseProvider parseProvider,
                                    IDiskScanService diskScanService,
                                    IMakeImportDecision importDecisionMaker,
                                    ISeriesService seriesService,
@@ -55,6 +55,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
         {
             _diskProvider = diskProvider;
             _parsingService = parsingService;
+            _parseProvider = parseProvider;
             _diskScanService = diskScanService;
             _importDecisionMaker = importDecisionMaker;
             _seriesService = seriesService;
@@ -112,7 +113,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
                 return files.Select(file => ProcessFile(file, downloadId, folder)).Where(i => i != null).ToList();
             }
 
-            var folderInfo = Parser.Parser.ParseTitle(directoryInfo.Name);
+            var folderInfo = _parseProvider.ParseTitle(directoryInfo.Name);
             var seriesFiles = _diskScanService.GetVideoFiles(folder).ToList();
             var decisions = _importDecisionMaker.GetImportDecisions(seriesFiles, series, folderInfo, SceneSource(series, folder));
 
@@ -144,7 +145,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
                 return MapItem(new ImportDecision(localEpisode, new Rejection("Unknown Series")), folder, downloadId);
             }
 
-            var importDecisions = _importDecisionMaker.GetImportDecisions(new List<string> {file},
+            var importDecisions = _importDecisionMaker.GetImportDecisions(new List<string> { file },
                 series, null, SceneSource(series, folder));
 
             return importDecisions.Any() ? MapItem(importDecisions.First(), folder, downloadId) : null;
@@ -192,11 +193,11 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
             for (int i = 0; i < message.Files.Count; i++)
             {
                 _logger.ProgressTrace("Processing file {0} of {1}", i + 1, message.Files.Count);
-                
+
                 var file = message.Files[i];
                 var series = _seriesService.GetSeries(file.SeriesId);
                 var episodes = _episodeService.GetEpisodes(file.EpisodeIds);
-                var parsedEpisodeInfo = Parser.Parser.ParsePath(file.Path) ?? new ParsedEpisodeInfo();
+                var parsedEpisodeInfo = _parseProvider.ParsePath(file.Path) ?? new ParsedEpisodeInfo();
                 var mediaInfo = _videoFileInfoReader.GetMediaInfo(file.Path);
                 var existingFile = series.Path.IsParentPath(file.Path);
 
@@ -219,7 +220,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport.Manual
 
                 if (file.DownloadId.IsNullOrWhiteSpace())
                 {
-                    imported.AddRange(_importApprovedEpisodes.Import(new List<ImportDecision> { importDecision }, !existingFile));                    
+                    imported.AddRange(_importApprovedEpisodes.Import(new List<ImportDecision> { importDecision }, !existingFile));
                 }
 
                 else

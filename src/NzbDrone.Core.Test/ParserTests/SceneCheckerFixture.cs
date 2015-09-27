@@ -1,11 +1,12 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
     [TestFixture]
-    public class SceneCheckerFixture
+    public class SceneCheckerFixture : CoreTest<ParseProvider>
     {
         [TestCase("South.Park.S04E13.Helen.Keller.The.Musical.720p.WEBRip.AAC2.0.H.264-GC")]
         [TestCase("Robot.Chicken.S07E02.720p.WEB-DL.DD5.1.H.264-pcsyndicate")]
@@ -14,7 +15,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("30.Rock.S04.720p.HDTV.X264-DIMENSION")]
         public void should_return_true_for_scene_names(string title)
         {
-            SceneChecker.IsSceneTitle(title).Should().BeTrue();
+            SceneChecker.IsSceneTitle(title, Subject).Should().BeTrue();
         }
 
 
@@ -28,7 +29,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("30.Rock.720p.HDTV.X264-DIMENSION", Description = "no episode")]
         public void should_return_false_for_non_scene_names(string title)
         {
-            SceneChecker.IsSceneTitle(title).Should().BeFalse();
+            SceneChecker.IsSceneTitle(title, Subject).Should().BeFalse();
         }
 
 

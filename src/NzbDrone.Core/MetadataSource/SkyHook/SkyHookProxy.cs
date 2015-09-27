@@ -8,6 +8,7 @@ using NzbDrone.Common.Http;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource.SkyHook.Resource;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.MetadataSource.SkyHook
@@ -15,12 +16,14 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
     public class SkyHookProxy : IProvideSeriesInfo, ISearchForNewSeries
     {
         private readonly IHttpClient _httpClient;
+        private readonly IParseProvider _parseProvider;
         private readonly Logger _logger;
         private readonly HttpRequestBuilder _requestBuilder;
 
-        public SkyHookProxy(IHttpClient httpClient, Logger logger)
+        public SkyHookProxy(IHttpClient httpClient, IParseProvider parseProvider, Logger logger)
         {
             _httpClient = httpClient;
+            _parseProvider = parseProvider;
             _logger = logger;
 
             _requestBuilder = new HttpRequestBuilder("http://skyhook.sonarr.tv/v1/tvdb/{route}/en/");
@@ -112,7 +115,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
             series.ImdbId = show.ImdbId;
             series.Title = show.Title;
-            series.CleanTitle = Parser.Parser.CleanSeriesTitle(show.Title);
+            series.CleanTitle = show.Title.CleanSeriesTitle();
             series.SortTitle = SeriesTitleNormalizer.Normalize(show.Title, show.TvdbId);
 
             if (show.FirstAired != null)
@@ -144,7 +147,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             {
                 series.Certification = show.ContentRating.ToUpper();
             }
-            
+
             series.Actors = show.Actors.Select(MapActors).ToList();
             series.Seasons = show.Seasons.Select(MapSeason).ToList();
             series.Images = show.Images.Select(MapImage).ToList();

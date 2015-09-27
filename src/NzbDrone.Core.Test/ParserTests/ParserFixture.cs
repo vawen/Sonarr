@@ -1,6 +1,7 @@
 using System;
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 
@@ -8,7 +9,7 @@ namespace NzbDrone.Core.Test.ParserTests
 {
 
     [TestFixture]
-    public class ParserFixture : CoreTest
+    public class ParserFixture : CoreTest<ParseProvider>
     {
         /*Fucked-up hall of shame,
          * WWE.Wrestlemania.27.PPV.HDTV.XviD-KYR
@@ -22,6 +23,19 @@ namespace NzbDrone.Core.Test.ParserTests
          * Superman.-.The.Man.of.Steel.1994-05.33.hybrid.DreamGirl-Novus-HD
          * Constantine S1-E1-WEB-DL-1080p-NZBgeek
          */
+
+        private string ParseSeriesName(string title)
+        {
+            var parseResult = Subject.ParseTitle(title);
+
+            if (parseResult == null)
+            {
+                return title.CleanSeriesTitle();
+            }
+
+            return parseResult.SeriesTitle;
+        }
+
 
         [TestCase("Chuck - 4x05 - Title", "Chuck")]
         [TestCase("Law & Order - 4x05 - Title", "laworder")]
@@ -39,7 +53,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Seed S02E09 HDTV x264-2HD [eztv]-[rarbg.com]", "Seed")]
         public void should_parse_series_name(String postTitle, String title)
         {
-            var result = Parser.Parser.ParseSeriesName(postTitle).CleanSeriesTitle();
+            var result = ParseSeriesName(postTitle).CleanSeriesTitle();
             result.Should().Be(title.CleanSeriesTitle());
         }
 
@@ -47,20 +61,20 @@ namespace NzbDrone.Core.Test.ParserTests
         public void should_remove_accents_from_title()
         {
             const String title = "Carnivàle";
-            
+
             title.CleanSeriesTitle().Should().Be("carnivale");
         }
 
         [TestCase("Discovery TV - Gold Rush : 02 Road From Hell [S04].mp4")]
         public void should_clean_up_invalid_path_characters(String postTitle)
         {
-            Parser.Parser.ParseTitle(postTitle);
+            Subject.ParseTitle(postTitle);
         }
 
         [TestCase("[scnzbefnet][509103] 2.Broke.Girls.S03E18.720p.HDTV.X264-DIMENSION", "2 Broke Girls")]
         public void should_remove_request_info_from_title(String postTitle, String title)
         {
-            Parser.Parser.ParseTitle(postTitle).SeriesTitle.Should().Be(title);
+            Subject.ParseTitle(postTitle).SeriesTitle.Should().Be(title);
         }
     }
 }

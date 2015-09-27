@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
 
     [TestFixture]
-    public class MultiEpisodeParserFixture : CoreTest
+    public class MultiEpisodeParserFixture : CoreTest<ParseProvider>
     {
         [TestCase("WEEDS.S03E01-06.DUAL.BDRip.XviD.AC3.-HELLYWOOD", "WEEDS", 3, new[] { 1, 2, 3, 4, 5, 6 })]
         [TestCase("Two.and.a.Half.Men.103.104.720p.HDTV.X264-DIMENSION", "Two and a Half Men", 1, new[] { 3, 4 })]
@@ -26,7 +27,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Breakout Kings - 2x09-2x10 - Served Cold [SDTV] ", "Breakout Kings", 2, new[] { 9, 10 })]
         [TestCase("Hell on Wheels S02E09 E10 HDTV x264 EVOLVE", "Hell on Wheels", 2, new[] { 9, 10 })]
         [TestCase("Hell.on.Wheels.S02E09-E10.720p.HDTV.x264-EVOLVE", "Hell on Wheels", 2, new[] { 9, 10 })]
-        [TestCase("Grey's Anatomy - 8x01_02 - Free Falling", "Grey's Anatomy", 8, new [] { 1,2 })]
+        [TestCase("Grey's Anatomy - 8x01_02 - Free Falling", "Grey's Anatomy", 8, new[] { 1, 2 })]
         [TestCase("8x01_02 - Free Falling", "", 8, new[] { 1, 2 })]
         [TestCase("Kaamelott.S01E91-E100", "Kaamelott", 1, new[] { 91, 92, 93, 94, 95, 96, 97, 98, 99, 100 })]
         [TestCase("Neighbours.S29E161-E165.PDTV.x264-FQM", "Neighbours", 29, new[] { 161, 162, 163, 164, 165 })]
@@ -36,8 +37,8 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("extant.10910.hdtv-lol.mp4", "extant", 1, new[] { 9, 10 })]
         [TestCase("E.010910.HDTVx264REPACKLOL.mp4", "E", 1, new[] { 9, 10 })]
         [TestCase("World Series of Poker - 2013x15 - 2013x16 - HD TV.mkv", "World Series of Poker", 2013, new[] { 15, 16 })]
-        [TestCase("The Librarians US S01E01-E02 720p HDTV x264", "The Librarians US", 1, new [] { 1, 2 })]
-        [TestCase("Series Title Season 01 Episode 05-06 720p", "Series Title", 1,new [] { 5, 6 })]
+        [TestCase("The Librarians US S01E01-E02 720p HDTV x264", "The Librarians US", 1, new[] { 1, 2 })]
+        [TestCase("Series Title Season 01 Episode 05-06 720p", "Series Title", 1, new[] { 5, 6 })]
         //[TestCase("My Name Is Earl - S03E01-E02 - My Name Is Inmate 28301-016 [SDTV]", "My Name Is Earl", 3, new[] { 1, 2 })]
         //[TestCase("Adventure Time - 5x01 - x02 - Finn the Human (2) & Jake the Dog (3)", "Adventure Time", 5, new [] { 1, 2 })]
         [TestCase("The Young And The Restless - S42 Ep10718 - Ep10722", "The Young And The Restless", 42, new[] { 10718, 10719, 10720, 10721, 10722 })]
@@ -45,7 +46,7 @@ namespace NzbDrone.Core.Test.ParserTests
         //[TestCase("", "", ,new [] {  })]
         public void should_parse_multiple_episodes(string postTitle, string title, int season, int[] episodes)
         {
-            var result = Parser.Parser.ParseTitle(postTitle);
+            var result = Subject.ParseTitle(postTitle);
             result.SeasonNumber.Should().Be(season);
             result.EpisodeNumbers.Should().BeEquivalentTo(episodes);
             result.SeriesTitle.Should().Be(title);

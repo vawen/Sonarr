@@ -1,16 +1,27 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Analizers;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Core.Tv;
 
-namespace NzbDrone.Core.Test.ParserTests
+namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
-    public class AbsoluteEpisodeNumberParserFixture : CoreTest<ParseProvider>
+    public class AbsoluteEpisodeNumberParserFixture : CoreTest<NewParseProvider>
     {
+
+        [SetUp]
+        public void Setup()
+        {
+            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+        }
+
         [TestCase("[SubDESU]_High_School_DxD_07_(1280x720_x264-AAC)_[6B7FD717]", "High School DxD", 7, 0, 0)]
         [TestCase("[Chihiro]_Working!!_-_06_[848x480_H.264_AAC][859EEAFA]", "Working!!", 6, 0, 0)]
         [TestCase("[Commie]_Senki_Zesshou_Symphogear_-_11_[65F220B4]", "Senki Zesshou Symphogear", 11, 0, 0)]
@@ -24,10 +35,10 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("[K-F] One Piece S10E14 214", "One Piece", 214, 10, 14)]
         [TestCase("[K-F] One Piece 10x14 214", "One Piece", 214, 10, 14)]
         [TestCase("[K-F] One Piece 214 10x14", "One Piece", 214, 10, 14)]
-        //        [TestCase("One Piece S10E14 214", "One Piece", 214, 10, 14)]
-        //        [TestCase("One Piece 10x14 214", "One Piece", 214, 10, 14)]
-        //        [TestCase("One Piece 214 10x14", "One Piece", 214, 10, 14)]
-        //        [TestCase("214 One Piece 10x14", "One Piece", 214, 10, 14)]
+        [TestCase("One Piece S10E14 214", "One Piece", 214, 10, 14)]
+        [TestCase("One Piece 10x14 214", "One Piece", 214, 10, 14)]
+        [TestCase("One Piece 214 10x14", "One Piece", 214, 10, 14)]
+        [TestCase("214 One Piece 10x14", "One Piece", 214, 10, 14)]
         [TestCase("Bleach - 031 - The Resolution to Kill [Lunar].avi", "Bleach", 31, 0, 0)]
         [TestCase("Bleach - 031 - The Resolution to Kill [Lunar]", "Bleach", 31, 0, 0)]
         [TestCase("[ACX]Hack Sign 01 Role Play [Kosaka] [9C57891E].mkv", "Hack Sign", 1, 0, 0)]
@@ -85,6 +96,11 @@ namespace NzbDrone.Core.Test.ParserTests
         //[TestCase("", "", 0, 0, 0)]
         public void should_parse_absolute_numbers(string postTitle, string title, int absoluteEpisodeNumber, int seasonNumber, int episodeNumber)
         {
+            var _title = title.NormalizeTitle();
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime });
+
             var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();
             result.AbsoluteEpisodeNumbers.Single().Should().Be(absoluteEpisodeNumber);
@@ -99,6 +115,11 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("[DeadFish] Kenzen Robo Daimidaler - 01 - OVD [BD][720p][AAC]", "Kenzen Robo Daimidaler", 1)]
         public void should_parse_absolute_specials(String postTitle, String title, Int32 absoluteEpisodeNumber)
         {
+            var _title = title.NormalizeTitle();
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime });
+
             var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();
             result.AbsoluteEpisodeNumbers.Single().Should().Be(absoluteEpisodeNumber);
@@ -116,6 +137,11 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("[RlsGrp] Series Title (2010) - S01E01-02 - 001-002 - Episode Title HDTV-720p v2", "Series Title (2010)", new[] { 1, 2 })]
         public void should_parse_multi_episode_absolute_numbers(string postTitle, string title, int[] absoluteEpisodeNumbers)
         {
+            var _title = title.NormalizeTitle();
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime });
+
             var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();
             result.AbsoluteEpisodeNumbers.Should().BeEquivalentTo(absoluteEpisodeNumbers);

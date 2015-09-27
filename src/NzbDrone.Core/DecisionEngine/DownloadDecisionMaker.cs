@@ -20,13 +20,15 @@ namespace NzbDrone.Core.DecisionEngine
     public class DownloadDecisionMaker : IMakeDownloadDecision
     {
         private readonly IEnumerable<IDecisionEngineSpecification> _specifications;
+        private readonly IParseProvider _parseProvider;
         private readonly IParsingService _parsingService;
         private readonly Logger _logger;
 
-        public DownloadDecisionMaker(IEnumerable<IDecisionEngineSpecification> specifications, IParsingService parsingService, Logger logger)
+        public DownloadDecisionMaker(IEnumerable<IDecisionEngineSpecification> specifications, IParsingService parsingService, IParseProvider parseProvider, Logger logger)
         {
             _specifications = specifications;
             _parsingService = parsingService;
+            _parseProvider = parseProvider;
             _logger = logger;
         }
 
@@ -61,7 +63,7 @@ namespace NzbDrone.Core.DecisionEngine
 
                 try
                 {
-                    var parsedEpisodeInfo = Parser.Parser.ParseTitle(report.Title);
+                    var parsedEpisodeInfo = _parseProvider.ParseTitle(report.Title);
 
                     if (parsedEpisodeInfo == null || parsedEpisodeInfo.IsPossibleSpecialEpisode)
                     {

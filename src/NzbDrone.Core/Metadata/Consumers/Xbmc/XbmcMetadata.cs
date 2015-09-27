@@ -12,6 +12,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Metadata.Files;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Metadata.Consumers.Xbmc
@@ -20,14 +21,17 @@ namespace NzbDrone.Core.Metadata.Consumers.Xbmc
     {
         private readonly IMapCoversToLocal _mediaCoverService;
         private readonly IDiskProvider _diskProvider;
+        private readonly IParseProvider _parseProvider;
         private readonly Logger _logger;
 
         public XbmcMetadata(IMapCoversToLocal mediaCoverService,
                             IDiskProvider diskProvider,
+                            IParseProvider parseProvider,
                             Logger logger)
         {
             _mediaCoverService = mediaCoverService;
             _diskProvider = diskProvider;
+            _parseProvider = parseProvider;
             _logger = logger;
         }
 
@@ -130,7 +134,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Xbmc
                 {
                     return null;
                 }
-                
+
                 return metadata;
             }
 
@@ -146,7 +150,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Xbmc
                 return metadata;
             }
 
-            var parseResult = Parser.Parser.ParseTitle(filename);
+            var parseResult = _parseProvider.ParseTitle(filename);
 
             if (parseResult != null &&
                 !parseResult.FullSeason &&
@@ -336,7 +340,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Xbmc
             catch (Exception ex)
             {
                 _logger.Error("Unable to process episode image for file: " + Path.Combine(series.Path, episodeFile.RelativePath), ex);
-                
+
                 return new List<ImageFileResult>();
             }
         }

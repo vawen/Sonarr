@@ -6,11 +6,11 @@ using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
-using NzbDrone.Core.MediaFiles.MediaInfo;
 
 
 namespace NzbDrone.Core.MediaFiles.EpisodeImport
@@ -25,6 +25,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
     {
         private readonly IEnumerable<IImportDecisionEngineSpecification> _specifications;
         private readonly IParsingService _parsingService;
+        private readonly IParseProvider _parseProvider;
         private readonly IMediaFileService _mediaFileService;
         private readonly IDiskProvider _diskProvider;
         private readonly IVideoFileInfoReader _videoFileInfoReader;
@@ -33,6 +34,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
 
         public ImportDecisionMaker(IEnumerable<IImportDecisionEngineSpecification> specifications,
                                    IParsingService parsingService,
+                                   IParseProvider parseProvider,
                                    IMediaFileService mediaFileService,
                                    IDiskProvider diskProvider,
                                    IVideoFileInfoReader videoFileInfoReader,
@@ -41,6 +43,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
         {
             _specifications = specifications;
             _parsingService = parsingService;
+            _parseProvider = parseProvider;
             _mediaFileService = mediaFileService;
             _diskProvider = diskProvider;
             _videoFileInfoReader = videoFileInfoReader;
@@ -170,7 +173,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
                     return false;
                 }
 
-                if (SceneChecker.IsSceneTitle(Path.GetFileName(file)))
+                if (SceneChecker.IsSceneTitle(Path.GetFileName(file), _parseProvider))
                 {
                     return false;
                 }
@@ -182,7 +185,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
         private QualityModel GetQuality(ParsedEpisodeInfo folderInfo, QualityModel fileQuality, Series series)
         {
             if (folderInfo != null &&
-                folderInfo.Quality.Quality != Quality.Unknown && 
+                folderInfo.Quality.Quality != Quality.Unknown &&
                 new QualityModelComparer(series.Profile).Compare(folderInfo.Quality, fileQuality) > 0)
             {
                 _logger.Debug("Using quality from folder: {0}", folderInfo.Quality);

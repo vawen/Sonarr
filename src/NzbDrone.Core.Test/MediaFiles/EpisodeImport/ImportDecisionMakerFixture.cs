@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -14,7 +15,6 @@ using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 using NzbDrone.Test.Common;
-using FizzWare.NBuilder;
 
 namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
 {
@@ -60,7 +60,7 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
             _quality = new QualityModel(Quality.DVD);
 
             _localEpisode = new LocalEpisode
-            { 
+            {
                 Series = _series,
                 Quality = _quality,
                 Episodes = new List<Episode> { new Episode() },
@@ -185,7 +185,7 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
             GivenSpecifications(_pass1, _pass2, _pass3);
             var expectedQuality = QualityParser.ParseQuality(_videoFiles.Single());
 
-            var result = Subject.GetImportDecisions(_videoFiles, _series, new ParsedEpisodeInfo{Quality = new QualityModel(Quality.SDTV)}, true);
+            var result = Subject.GetImportDecisions(_videoFiles, _series, new ParsedEpisodeInfo { Quality = new QualityModel(Quality.SDTV) }, true);
 
             result.Single().LocalEpisode.Quality.Should().Be(expectedQuality);
         }
@@ -240,8 +240,9 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
 
             GivenSpecifications(_pass1);
             GivenVideoFiles(videoFiles);
+            var parseProvider = Mocker.Resolve<ParseProvider>();
 
-            var folderInfo = Parser.Parser.ParseTitle("Series.Title.S01");
+            var folderInfo = parseProvider.ParseTitle("Series.Title.S01");
 
             Subject.GetImportDecisions(_videoFiles, _series, folderInfo, true);
 
@@ -263,8 +264,9 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
 
             GivenSpecifications(_pass1);
             GivenVideoFiles(videoFiles);
+            var parseProvider = Mocker.Resolve<ParseProvider>();
 
-            var folderInfo = Parser.Parser.ParseTitle("Series.Title.S01E01");
+            var folderInfo = parseProvider.ParseTitle("Series.Title.S01E01");
 
             Subject.GetImportDecisions(_videoFiles, _series, folderInfo, true);
 
@@ -285,8 +287,9 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
 
             GivenSpecifications(_pass1);
             GivenVideoFiles(videoFiles);
+            var parseProvider = Mocker.Resolve<ParseProvider>();
 
-            var folderInfo = Parser.Parser.ParseTitle("Series.Title.S01E01");
+            var folderInfo = parseProvider.ParseTitle("Series.Title.S01E01");
 
             Subject.GetImportDecisions(_videoFiles, _series, folderInfo, true);
 
@@ -312,8 +315,10 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
             Mocker.GetMock<IDetectSample>()
                   .Setup(s => s.IsSample(_series, It.IsAny<QualityModel>(), It.Is<string>(c => c.Contains("sample")), It.IsAny<long>(), It.IsAny<int>()))
                   .Returns(true);
+            var parseProvider = Mocker.Resolve<ParseProvider>();
 
-            var folderInfo = Parser.Parser.ParseTitle("Series.Title.S01E01");
+
+            var folderInfo = parseProvider.ParseTitle("Series.Title.S01E01");
 
             Subject.GetImportDecisions(_videoFiles, _series, folderInfo, true);
 
@@ -334,8 +339,10 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
 
             GivenSpecifications(_pass1);
             GivenVideoFiles(videoFiles);
+            var parseProvider = Mocker.Resolve<ParseProvider>();
 
-            var folderInfo = Parser.Parser.ParseTitle("Series.Title.S01E01.720p.HDTV-LOL");
+
+            var folderInfo = parseProvider.ParseTitle("Series.Title.S01E01.720p.HDTV-LOL");
 
             Subject.GetImportDecisions(_videoFiles, _series, folderInfo, true);
 
@@ -359,7 +366,7 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
 
             var folderQuality = new QualityModel(Quality.Unknown);
 
-            var result = Subject.GetImportDecisions(_videoFiles, _series, new ParsedEpisodeInfo { Quality = folderQuality}, true);
+            var result = Subject.GetImportDecisions(_videoFiles, _series, new ParsedEpisodeInfo { Quality = folderQuality }, true);
 
             result.Single().LocalEpisode.Quality.Should().Be(_quality);
         }

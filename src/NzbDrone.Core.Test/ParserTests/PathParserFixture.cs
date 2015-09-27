@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
@@ -7,7 +8,7 @@ namespace NzbDrone.Core.Test.ParserTests
 {
 
     [TestFixture]
-    public class PathParserFixture : CoreTest
+    public class PathParserFixture : CoreTest<ParseProvider>
     {
         [TestCase(@"z:\tv shows\battlestar galactica (2003)\Season 3\S03E05 - Collaborators.mkv", 3, 5)]
         [TestCase(@"z:\tv shows\modern marvels\Season 16\S16E03 - The Potato.mkv", 16, 3)]
@@ -30,10 +31,10 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase(@"C:\Test\Series\Season 01\1 Pilot (1080p HD).mkv", 1, 1)]
         [TestCase(@"C:\Test\Series\Season 1\02 Honor Thy Father (1080p HD).m4v", 1, 2)]
         [TestCase(@"C:\Test\Series\Season 1\2 Honor Thy Father (1080p HD).m4v", 1, 2)]
-//        [TestCase(@"C:\CSI.NY.S02E04.720p.WEB-DL.DD5.1.H.264\73696S02-04.mkv", 2, 4)] //Gets treated as S01E04 (because it gets parsed as anime)
+        //        [TestCase(@"C:\CSI.NY.S02E04.720p.WEB-DL.DD5.1.H.264\73696S02-04.mkv", 2, 4)] //Gets treated as S01E04 (because it gets parsed as anime)
         public void should_parse_from_path(string path, int season, int episode)
         {
-            var result = Parser.Parser.ParsePath(path.AsOsAgnostic());
+            var result = Subject.ParsePath(path.AsOsAgnostic());
             result.EpisodeNumbers.Should().HaveCount(1);
             result.SeasonNumber.Should().Be(season);
             result.EpisodeNumbers[0].Should().Be(episode);

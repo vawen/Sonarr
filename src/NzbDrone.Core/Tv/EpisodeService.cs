@@ -7,6 +7,7 @@ using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv.Events;
 
 namespace NzbDrone.Core.Tv
@@ -102,18 +103,18 @@ namespace NzbDrone.Core.Tv
         {
             return _episodeRepository.GetEpisodes(seriesId, seasonNumber);
         }
-        
-        public Episode FindEpisodeByTitle(int seriesId, int seasonNumber, string releaseTitle) 
+
+        public Episode FindEpisodeByTitle(int seriesId, int seasonNumber, string releaseTitle)
         {
             // TODO: can replace this search mechanism with something smarter/faster/better
-            var normalizedReleaseTitle = Parser.Parser.NormalizeEpisodeTitle(releaseTitle).Replace(".", " ");
+            var normalizedReleaseTitle = releaseTitle.NormalizeEpisodeTitle().Replace(".", " ");
             var episodes = _episodeRepository.GetEpisodes(seriesId, seasonNumber);
 
             var matches = episodes.Select(
                 episode => new
                            {
-                               Position = normalizedReleaseTitle.IndexOf(Parser.Parser.NormalizeEpisodeTitle(episode.Title), StringComparison.CurrentCultureIgnoreCase),
-                               Length = Parser.Parser.NormalizeEpisodeTitle(episode.Title).Length,
+                               Position = normalizedReleaseTitle.IndexOf(episode.Title.NormalizeEpisodeTitle(), StringComparison.CurrentCultureIgnoreCase),
+                               Length = episode.Title.NormalizeEpisodeTitle().Length,
                                Episode = episode
                            })
                                 .Where(e => e.Episode.Title.Length > 0 && e.Position >= 0)

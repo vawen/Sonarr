@@ -182,8 +182,6 @@ namespace NzbDrone.Core.Parser
         //Regex to detect whether the title was reversed.
         private static readonly Regex ReversedTitleRegex = new Regex(@"[-._ ](p027|p0801|\d{2}E\d{2}S)[-._ ]", RegexOptions.Compiled);
 
-        private static readonly Regex NormalizeRegex = new Regex(@"((?:\b|_)(?<!^)(a(?!$)|an|the|and|or|of)(?:\b|_))|\W|_",
-                                                                RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly Regex FileExtensionRegex = new Regex(@"\.[a-z0-9]{2,4}$",
                                                                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -351,7 +349,7 @@ namespace NzbDrone.Core.Parser
             return null;
         }
 
-        public static string ParseSeriesName(string title)
+        private static string ParseSeriesName(string title)
         {
             Logger.Debug("Parsing string '{0}'", title);
 
@@ -359,21 +357,10 @@ namespace NzbDrone.Core.Parser
 
             if (parseResult == null)
             {
-                return CleanSeriesTitle(title);
+                return title.CleanSeriesTitle();
             }
 
             return parseResult.SeriesTitle;
-        }
-
-        public static string CleanSeriesTitle(this string title)
-        {
-            long number = 0;
-
-            //If Title only contains numbers return it as is.
-            if (Int64.TryParse(title, out number))
-                return title;
-
-            return NormalizeRegex.Replace(title, String.Empty).ToLower().RemoveAccent();
         }
 
         public static string NormalizeEpisodeTitle(string title)
@@ -504,7 +491,7 @@ namespace NzbDrone.Core.Parser
 
             if (lowerTitle.Contains("hungarian"))
                 return Language.Hungarian;
-                
+
             var match = LanguageRegex.Match(title);
 
             if (match.Groups["italian"].Captures.Cast<Capture>().Any())

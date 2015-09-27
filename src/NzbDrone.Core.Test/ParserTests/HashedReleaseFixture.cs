@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -7,7 +8,7 @@ using NzbDrone.Test.Common;
 namespace NzbDrone.Core.Test.ParserTests
 {
     [TestFixture]
-    public class HashedReleaseFixture : CoreTest
+    public class HashedReleaseFixture : CoreTest<ParseProvider>
     {
         public static object[] HashedReleaseParserCases =
         {
@@ -86,7 +87,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [Test, TestCaseSource("HashedReleaseParserCases")]
         public void should_properly_parse_hashed_releases(string path, string title, Quality quality, string releaseGroup)
         {
-            var result = Parser.Parser.ParsePath(path);
+            var result = Subject.ParsePath(path);
             result.SeriesTitle.Should().Be(title);
             result.Quality.Quality.Should().Be(quality);
             result.ReleaseGroup.Should().Be(releaseGroup);

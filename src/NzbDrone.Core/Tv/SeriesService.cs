@@ -126,14 +126,14 @@ namespace NzbDrone.Core.Tv
                 return list.Single();
             }
             // build ordered list of series by position in the search string
-            var query = 
+            var query =
                 list.Select(series => new
                 {
                     position = cleanTitle.IndexOf(series.CleanTitle),
                     length = series.CleanTitle.Length,
                     series = series
                 })
-                    .Where(s => (s.position>=0))
+                    .Where(s => (s.position >= 0))
                     .ToList()
                     .OrderBy(s => s.position)
                     .ThenByDescending(s => s.length)
@@ -212,7 +212,7 @@ namespace NzbDrone.Core.Tv
                     _logger.Trace("Not changing path for: {0}", s.Title);
                 }
             }
-            
+
             _seriesRepository.UpdateMany(series);
             _logger.Debug("{0} series updated", series.Count);
 

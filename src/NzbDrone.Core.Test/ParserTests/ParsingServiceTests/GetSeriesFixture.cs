@@ -24,18 +24,20 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
         public void should_use_parsed_series_title()
         {
             const string title = "30.Rock.S01E01.720p.hdtv";
+            var parseProvider = Mocker.Resolve<ParseProvider>();
 
             Subject.GetSeries(title);
 
             Mocker.GetMock<ISeriesService>()
-                  .Verify(s => s.FindByTitle(Parser.Parser.ParseTitle(title).SeriesTitle), Times.Once());
+                  .Verify(s => s.FindByTitle(parseProvider.ParseTitle(title).SeriesTitle), Times.Once());
         }
 
         [Test]
         public void should_fallback_to_title_without_year_and_year_when_title_lookup_fails()
         {
             const string title = "House.2004.S01E01.720p.hdtv";
-            var parsedEpisodeInfo = Parser.Parser.ParseTitle(title);
+            var parseProvider = Mocker.Resolve<ParseProvider>();
+            var parsedEpisodeInfo = parseProvider.ParseTitle(title);
 
             Subject.GetSeries(title);
 

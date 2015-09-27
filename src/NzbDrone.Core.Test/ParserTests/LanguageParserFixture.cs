@@ -7,7 +7,7 @@ namespace NzbDrone.Core.Test.ParserTests
 {
 
     [TestFixture]
-    public class LanguageParserFixture : CoreTest
+    public class LanguageParserFixture : CoreTest<ParseProvider>
     {
         [TestCase("Castle.2009.S01E14.English.HDTV.XviD-LOL", Language.English)]
         [TestCase("Castle.2009.S01E14.French.HDTV.XviD-LOL", Language.French)]
@@ -48,7 +48,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Castle.2009.S01E14.HDTV.XviD.HUN-LOL", Language.Hungarian)]
         public void should_parse_language(string postTitle, Language language)
         {
-            var result = Parser.Parser.ParseTitle(postTitle);
+            var result = Subject.ParseTitle(postTitle);
             result.Language.Should().Be(language);
         }
     }

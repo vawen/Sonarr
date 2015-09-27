@@ -1,18 +1,19 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
     [TestFixture]
-    public class SeriesTitleInfoFixture : CoreTest
+    public class SeriesTitleInfoFixture : CoreTest<ParseProvider>
     {
         [Test]
         public void should_have_year_zero_when_title_doesnt_have_a_year()
         {
             const string title = "House.S01E01.pilot.720p.hdtv";
 
-            var result = Parser.Parser.ParseTitle(title).SeriesTitleInfo;
+            var result = Subject.ParseTitle(title).SeriesTitleInfo;
 
             result.Year.Should().Be(0);
         }
@@ -22,7 +23,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             const string title = "House.S01E01.pilot.720p.hdtv";
 
-            var result = Parser.Parser.ParseTitle(title).SeriesTitleInfo;
+            var result = Subject.ParseTitle(title).SeriesTitleInfo;
 
             result.Title.Should().Be(result.TitleWithoutYear);
         }
@@ -32,7 +33,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             const string title = "House.2004.S01E01.pilot.720p.hdtv";
 
-            var result = Parser.Parser.ParseTitle(title).SeriesTitleInfo;
+            var result = Subject.ParseTitle(title).SeriesTitleInfo;
 
             result.Year.Should().Be(2004);
         }
@@ -42,7 +43,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             const string title = "House.2004.S01E01.pilot.720p.hdtv";
 
-            var result = Parser.Parser.ParseTitle(title).SeriesTitleInfo;
+            var result = Subject.ParseTitle(title).SeriesTitleInfo;
 
             result.Title.Should().Be("House 2004");
         }
@@ -52,7 +53,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             const string title = "House.2004.S01E01.pilot.720p.hdtv";
 
-            var result = Parser.Parser.ParseTitle(title).SeriesTitleInfo;
+            var result = Subject.ParseTitle(title).SeriesTitleInfo;
 
             result.TitleWithoutYear.Should().Be("House");
         }

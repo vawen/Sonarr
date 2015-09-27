@@ -12,6 +12,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Metadata.Files;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Metadata.Consumers.Wdtv
@@ -20,14 +21,17 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
     {
         private readonly IMapCoversToLocal _mediaCoverService;
         private readonly IDiskProvider _diskProvider;
+        private readonly IParseProvider _parseProvider;
         private readonly Logger _logger;
 
         public WdtvMetadata(IMapCoversToLocal mediaCoverService,
                             IDiskProvider diskProvider,
+                            IParseProvider parseProvider,
                             Logger logger)
         {
             _mediaCoverService = mediaCoverService;
             _diskProvider = diskProvider;
+            _parseProvider = parseProvider;
             _logger = logger;
         }
 
@@ -124,7 +128,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
                 return metadata;
             }
 
-            var parseResult = Parser.Parser.ParseTitle(filename);
+            var parseResult = _parseProvider.ParseTitle(filename);
 
             if (parseResult != null &&
                 !parseResult.FullSeason)
@@ -138,7 +142,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
                         metadata.Type = MetadataType.EpisodeImage;
                         return metadata;
                 }
-                
+
             }
 
             return null;
@@ -231,7 +235,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
             {
                 return new List<ImageFileResult>();
             }
-            
+
             var seasonFolders = GetSeasonFolders(series);
 
             //Work out the path to this season - if we don't have a matching path then skip this season.
@@ -252,7 +256,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
 
             var path = Path.Combine(series.Path, seasonFolder, "folder.jpg");
 
-            return new List<ImageFileResult>{ new ImageFileResult(path, image.Url) };
+            return new List<ImageFileResult> { new ImageFileResult(path, image.Url) };
         }
 
         public override List<ImageFileResult> EpisodeImages(Series series, EpisodeFile episodeFile)
@@ -270,7 +274,7 @@ namespace NzbDrone.Core.Metadata.Consumers.Wdtv
                 return new List<ImageFileResult>();
             }
 
-            return new List<ImageFileResult>{ new ImageFileResult(GetEpisodeImageFilename(episodeFile.RelativePath), screenshot.Url) };
+            return new List<ImageFileResult> { new ImageFileResult(GetEpisodeImageFilename(episodeFile.RelativePath), screenshot.Url) };
         }
 
         private string GetEpisodeMetadataFilename(string episodeFilePath)

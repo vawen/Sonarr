@@ -5,11 +5,11 @@ using System.Linq;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.Download;
 using NzbDrone.Core.MediaFiles.EpisodeImport;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Tv;
-using NzbDrone.Core.Download;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.MediaFiles
 {
@@ -26,6 +26,7 @@ namespace NzbDrone.Core.MediaFiles
         private readonly IDiskScanService _diskScanService;
         private readonly ISeriesService _seriesService;
         private readonly IParsingService _parsingService;
+        private readonly IParseProvider _parseProvider;
         private readonly IMakeImportDecision _importDecisionMaker;
         private readonly IImportApprovedEpisodes _importApprovedEpisodes;
         private readonly IDetectSample _detectSample;
@@ -35,6 +36,7 @@ namespace NzbDrone.Core.MediaFiles
                                                IDiskScanService diskScanService,
                                                ISeriesService seriesService,
                                                IParsingService parsingService,
+                                               IParseProvider parseProvider,
                                                IMakeImportDecision importDecisionMaker,
                                                IImportApprovedEpisodes importApprovedEpisodes,
                                                IDetectSample detectSample,
@@ -44,6 +46,7 @@ namespace NzbDrone.Core.MediaFiles
             _diskScanService = diskScanService;
             _seriesService = seriesService;
             _parsingService = parsingService;
+            _parseProvider = parseProvider;
             _importDecisionMaker = importDecisionMaker;
             _importApprovedEpisodes = importApprovedEpisodes;
             _detectSample = detectSample;
@@ -106,7 +109,7 @@ namespace NzbDrone.Core.MediaFiles
 
             foreach (var videoFile in videoFiles)
             {
-                var episodeParseResult = Parser.Parser.ParseTitle(Path.GetFileName(videoFile));
+                var episodeParseResult = _parseProvider.ParseTitle(Path.GetFileName(videoFile));
 
                 if (episodeParseResult == null)
                 {
@@ -162,7 +165,7 @@ namespace NzbDrone.Core.MediaFiles
             }
 
             var cleanedUpName = GetCleanedUpFolderName(directoryInfo.Name);
-            var folderInfo = Parser.Parser.ParseTitle(directoryInfo.Name);
+            var folderInfo = _parseProvider.ParseTitle(directoryInfo.Name);
 
             if (folderInfo != null)
             {

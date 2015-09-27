@@ -1,11 +1,12 @@
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.ParserTests
 {
     [TestFixture]
-    public class ReleaseGroupParserFixture : CoreTest
+    public class ReleaseGroupParserFixture : CoreTest<ParseProvider>
     {
         [TestCase("Castle.2009.S01E14.English.HDTV.XviD-LOL", "LOL")]
         [TestCase("Castle 2009 S01E14 English HDTV XviD LOL", null)]
@@ -29,7 +30,7 @@ namespace NzbDrone.Core.Test.ParserTests
         //[TestCase("", "")]
         public void should_parse_release_group(string title, string expected)
         {
-            Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);
+            Subject.ParseReleaseGroup(title).Should().Be(expected);
         }
 
         [Test]
@@ -37,7 +38,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             const string path = @"C:\Test\Doctor.Who.2005.s01e01.internal.bdrip.x264-archivist.mkv";
 
-            Parser.Parser.ParsePath(path).ReleaseGroup.Should().Be("archivist");
+            Subject.ParsePath(path).ReleaseGroup.Should().Be("archivist");
         }
 
         [TestCase("The.Longest.Mystery.S02E04.720p.WEB-DL.AAC2.0.H.264-EVL-RP", "EVL")]
@@ -48,7 +49,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("saturday.night.live.s40e11.kevin.hart_sia.720p.hdtv.x264-w4f-sample.mkv", "w4f")]
         public void should_not_include_repost_in_release_group(string title, string expected)
         {
-            Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);
+            Subject.ParseReleaseGroup(title).Should().Be(expected);
         }
 
         [TestCase("[FFF] Invaders of the Rokujouma!! - S01E11 - Someday, With Them", "FFF")]
@@ -60,7 +61,7 @@ namespace NzbDrone.Core.Test.ParserTests
         //[TestCase("", "")]
         public void should_parse_anime_release_groups(string title, string expected)
         {
-            Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);
+            Subject.ParseReleaseGroup(title).Should().Be(expected);
         }
     }
 }

@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource.SkyHook;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 using NzbDrone.Test.Common.Categories;
@@ -53,7 +54,7 @@ namespace NzbDrone.Core.Test.MetadataSource.SkyHook
         {
             series.Should().NotBeNull();
             series.Title.Should().NotBeNullOrWhiteSpace();
-            series.CleanTitle.Should().Be(Parser.Parser.CleanSeriesTitle(series.Title));
+            series.CleanTitle.Should().Be(series.Title.CleanSeriesTitle());
             series.SortTitle.Should().Be(SeriesTitleNormalizer.Normalize(series.Title, series.TvdbId));
             series.Overview.Should().NotBeNullOrWhiteSpace();
             series.AirTime.Should().NotBeNullOrWhiteSpace();

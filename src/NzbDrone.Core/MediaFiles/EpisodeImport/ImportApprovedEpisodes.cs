@@ -5,12 +5,12 @@ using System.Linq;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Download;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
-using NzbDrone.Core.Download;
 
 
 namespace NzbDrone.Core.MediaFiles.EpisodeImport
@@ -23,6 +23,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
     public class ImportApprovedEpisodes : IImportApprovedEpisodes
     {
         private readonly IUpgradeMediaFiles _episodeFileUpgrader;
+        private readonly IParseProvider _parseProvider;
         private readonly IMediaFileService _mediaFileService;
         private readonly IDiskProvider _diskProvider;
         private readonly IEventAggregator _eventAggregator;
@@ -30,12 +31,14 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
 
         public ImportApprovedEpisodes(IUpgradeMediaFiles episodeFileUpgrader,
                                       IMediaFileService mediaFileService,
+                                      IParseProvider parseProvider,
                                       IDiskProvider diskProvider,
                                       IEventAggregator eventAggregator,
                                       Logger logger)
         {
             _episodeFileUpgrader = episodeFileUpgrader;
             _mediaFileService = mediaFileService;
+            _parseProvider = parseProvider;
             _diskProvider = diskProvider;
             _eventAggregator = eventAggregator;
             _logger = logger;
@@ -130,9 +133,9 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
         {
             if (downloadClientItem != null)
             {
-                var title = Parser.Parser.RemoveFileExtension(downloadClientItem.Title);
+                var title = downloadClientItem.Title.RemoveFileExtension();
 
-                var parsedTitle = Parser.Parser.ParseTitle(title);
+                var parsedTitle = _parseProvider.ParseTitle(title);
 
                 if (parsedTitle != null && !parsedTitle.FullSeason)
                 {
@@ -142,7 +145,7 @@ namespace NzbDrone.Core.MediaFiles.EpisodeImport
 
             var fileName = Path.GetFileNameWithoutExtension(localEpisode.Path.CleanFilePath());
 
-            if (SceneChecker.IsSceneTitle(fileName))
+            if (SceneChecker.IsSceneTitle(fileName, _parseProvider))
             {
                 return fileName;
             }
