@@ -36,16 +36,15 @@ namespace NzbDrone.Core.Parser
 
         public ParsedEpisodeInfo ParseTitle(string title)
         {
-            List<string> UnknownInfo;
-            var parsedInfo = InternalParse(title, out UnknownInfo);
+            List<string> unknownInfo;
+            var parsedInfo = InternalParse(title, out unknownInfo);
 
-            if (parsedInfo.Series == null)
+            if (parsedInfo.IsEmpty())
             {
-                parsedInfo = InternalParse(title.NormalizeTitle(), out UnknownInfo);
+                parsedInfo = InternalParse(title.NormalizeTitle(), out unknownInfo);
             }
 
-            if (parsedInfo.Series == null)
-                return null;
+            if (parsedInfo.IsEmpty()) return null;
 
             ParsedEpisodeInfo parsedEpisodeInfo = new ParsedEpisodeInfo();
 
@@ -68,19 +67,20 @@ namespace NzbDrone.Core.Parser
             parsedEpisodeInfo.Special = parsedInfo.Special.Any();
 
             // Series Title
-            parsedEpisodeInfo.SeriesTitle = parsedInfo.Series.Title;
+            parsedEpisodeInfo.SeriesTitle = parsedInfo.Series == null ? "" : parsedInfo.Series.Title;
+
 
             // Analize episode and season
-            if (parsedInfo.Series.SeriesType == SeriesTypes.Daily)
+            if (parsedInfo.Series == null || parsedInfo.Series.SeriesType == SeriesTypes.Daily)
             {
-                DateTime airDate = DateTime.Today;
-                bool asigned = false;
+                var airDate = DateTime.Today;
+                var asigned = false;
 
                 foreach (var newDate in parsedInfo.Daily)
                 {
-                    int newYear = 0;
-                    int newMonth = 0;
-                    int newDay = 0;
+                    var newYear = 0;
+                    var newMonth = 0;
+                    var newDay = 0;
                     var airDateMatch = AnalizeDaily.AirDateRegex.Match(newDate);
                     var sixDigitAirDateMatch = AnalizeDaily.SixDigitAirDateRegex.Match(newDate);
 
@@ -92,9 +92,9 @@ namespace NzbDrone.Core.Parser
                     }
                     else if (sixDigitAirDateMatch.Success)
                     {
-                        Int32.TryParse("20" + airDateMatch.Groups["airyear"].Value, out newYear);
-                        Int32.TryParse(airDateMatch.Groups["airmonth"].Value, out newMonth);
-                        Int32.TryParse(airDateMatch.Groups["airday"].Value, out newDay);
+                        Int32.TryParse("20" + sixDigitAirDateMatch.Groups["airyear"].Value, out newYear);
+                        Int32.TryParse(sixDigitAirDateMatch.Groups["airmonth"].Value, out newMonth);
+                        Int32.TryParse(sixDigitAirDateMatch.Groups["airday"].Value, out newDay);
                     }
 
                     //Swap day and month if month is bigger than 12 (scene fail)
@@ -105,20 +105,22 @@ namespace NzbDrone.Core.Parser
                         newMonth = tempDay;
                     }
 
-                    if (newYear > 1900 && newMonth > 0 && newDay > 0)
+                    if (newYear <= 1900 || newMonth <= 0 || newDay <= 0)
                     {
-                        var newAirDate = new DateTime(newYear, newMonth, newDay);
+                        continue;
+                    }
 
-                        if (!asigned)
-                        {
-                            airDate = newAirDate;
-                            asigned = true;
-                        }
-                        else if (airDate < newAirDate)
-                        {
-                            // 2 Dates, get the more recent one
-                            airDate = newAirDate;
-                        }
+                    var newAirDate = new DateTime(newYear, newMonth, newDay);
+
+                    if (!asigned)
+                    {
+                        airDate = newAirDate;
+                        asigned = true;
+                    }
+                    else if (airDate < newAirDate)
+                    {
+                        // 2 Dates, get the more recent one
+                        airDate = newAirDate;
                     }
                 }
 
@@ -127,7 +129,7 @@ namespace NzbDrone.Core.Parser
                     parsedEpisodeInfo.AirDate = airDate.ToString(Episode.AIR_DATE_FORMAT);
                 }
             }
-            else if (parsedInfo.Series.SeriesType == SeriesTypes.Anime)
+            if (parsedInfo.Series == null || parsedInfo.Series.SeriesType == SeriesTypes.Anime)
             {
                 // Parse absolute episodes
                 List<List<Capture>> listAbsoluteEpisodeCaptures = new List<List<Capture>>();
@@ -209,7 +211,7 @@ namespace NzbDrone.Core.Parser
                 }
             }
 
-            if (parsedInfo.Series.SeriesType == SeriesTypes.Anime || parsedInfo.Series.SeriesType == SeriesTypes.Standard)
+            if (parsedInfo.Series == null || parsedInfo.Series.SeriesType == SeriesTypes.Anime || parsedInfo.Series.SeriesType == SeriesTypes.Standard)
             {
                 if (parsedInfo.Season.Count > 0)
                 {
@@ -240,6 +242,25 @@ namespace NzbDrone.Core.Parser
                         seasonNumber.Add(seasons.First());
 
                         foreach (Match match in matchCollection)
+                        {
+                            var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
+                            if (episodeCaptures.Any())
+                            {
+                                var first = Convert.ToInt32(episodeCaptures.First().Value);
+                                var last = Convert.ToInt32(episodeCaptures.Last().Value);
+
+                                if (first > last)
+                                {
+                                    return null;
+                                }
+
+                                var count = last - first + 1;
+                                episodeNumbers.Add(Enumerable.Range(first, count).ToList());
+                            }
+                        }
+
+                        // Miniseries
+                        foreach (Match match in AnalizeSeason.SimpleMiniSerie.Matches(item))
                         {
                             var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
                             if (episodeCaptures.Any())
@@ -419,10 +440,6 @@ namespace NzbDrone.Core.Parser
             // Try to find the series name
 
             string titleToRemove = "";
-            string year = "";
-            string episode = "";
-            bool usedYear = false;
-            bool usedEpisode = false;
 
             foreach (var unk in UnknownInfo)
             {
@@ -434,9 +451,14 @@ namespace NzbDrone.Core.Parser
                     {
                         _title = String.Format("{0} ({1})", unk, _year).NormalizeTitle();
                         newSerie = _seriesService.FindByTitle(_title);
-                        if (usedYear = newSerie != null)
+                        if (newSerie == null)
                         {
-                            year = _year;
+                            _title = String.Format("{0} {1}", _year, unk).NormalizeTitle();
+                            newSerie = _seriesService.FindByTitle(_title);
+                        }
+                        if (newSerie != null)
+                        {
+                            myParsedInfo.Year.Remove(_year);
                             break;
                         }
                     }
@@ -447,28 +469,43 @@ namespace NzbDrone.Core.Parser
                     {
                         _title = String.Format("{0} {1}", unk, _episode).NormalizeTitle();
                         newSerie = _seriesService.FindByTitle(_title);
-                        usedEpisode |= newSerie != null;
-                        if (usedEpisode = newSerie != null)
+                        if (newSerie == null)
                         {
-                            episode = _episode;
+                            _title = String.Format("{0} {1}", _episode, unk).NormalizeTitle();
+                            newSerie = _seriesService.FindByTitle(_title);
+                        }
+                        if (newSerie != null)
+                        {
+                            myParsedInfo.AbsoluteEpisodeNumber.Remove(_episode);
                             break;
                         }
                     }
                 }
-
+                if (newSerie == null)
+                {
+                    foreach (var _hash in myParsedInfo.Hash)
+                    {
+                        _title = String.Format("{0} {1}", unk, _hash).NormalizeTitle();
+                        newSerie = _seriesService.FindByTitle(_title);
+                        if (newSerie == null)
+                        {
+                            _title = String.Format("{0} {1}", _hash, unk).NormalizeTitle();
+                            newSerie = _seriesService.FindByTitle(_title);
+                        }
+                        if (newSerie != null)
+                        {
+                            myParsedInfo.Hash.Remove(_hash);
+                            break;
+                        }
+                    }
+                }
                 if (newSerie != null)
                 {
                     titleToRemove = unk;
                     myParsedInfo.Series = newSerie;
                     break;
                 }
-            }
-
-            if (usedYear)
-                myParsedInfo.Year.Remove(year);
-
-            if (usedEpisode)
-                myParsedInfo.AbsoluteEpisodeNumber.Remove(episode);
+            }  
 
             UnknownInfo.Remove(titleToRemove);
 

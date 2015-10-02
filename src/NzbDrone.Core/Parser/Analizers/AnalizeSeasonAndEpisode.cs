@@ -10,10 +10,16 @@ namespace NzbDrone.Core.Parser.Analizers
                @"(?:\b|_)(?:S?(?<season>(?<!\d)(?:\d{1,2}|\d{4})(?!\d+))(?:(?:\-|[ex]|\W[ex]|_)(?<episode>\d{1,3})(?!\d+))+)(?:\b|_)",
                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
+        public static readonly Regex SimpleMiniSerie = new Regex(
+            @"(?:(?:\b|_)(?:(?:Part\W?|(?<!\d\W)e)(?<episode>\d{1,2}(?!\d+)))+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+
 
         public AnalizeSeason()
             : base(new Regex[] {
                 new Regex(@"(?:\b|_)(?:S?(?<!\d)(?:\d{1,2}|\d{4})(?!\d+)(?:(?:\-|[ex]|\W[ex]|_)\d{2,3}(?!\d+))+)(?:\b|_)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
+                new Regex(@"(?:(?:\b|_)(?:(?:Part\W?|(?<!\d\W)e)(?:\d{1,2}(?!\d+)))+(?:\b|_))",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)
             }) { }
 

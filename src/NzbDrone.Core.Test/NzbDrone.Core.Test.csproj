@@ -276,6 +276,9 @@
     <Compile Include="ParserTests\NewParser\AnimeMetadataParserFixture.cs" />
     <Compile Include="ParserTests\NewParser\CrapParserFixture.cs" />
     <Compile Include="ParserTests\NewParser\DailyEpisodeParserFixture.cs" />
+    <Compile Include="ParserTests\NewParser\IsPossibleSpecialEpisodeFixture.cs" />
+    <Compile Include="ParserTests\NewParser\MiniSeriesEpisodeParserFixture.cs" />
+    <Compile Include="ParserTests\NewParser\MultiEpisodeParserFixture.cs" />
     <Compile Include="Qualities\RevisionComparableFixture.cs" />
     <Compile Include="QueueTests\QueueServiceFixture.cs" />
     <Compile Include="RemotePathMappingsTests\RemotePathMappingServiceFixture.cs" />

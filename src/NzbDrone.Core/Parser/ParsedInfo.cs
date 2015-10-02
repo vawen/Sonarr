@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.Tv;
+using Omu.ValueInjecter;
+using System.Collections;
 
 namespace NzbDrone.Core.Parser
 {
@@ -23,6 +25,22 @@ namespace NzbDrone.Core.Parser
         public List<string> Year { get; set; }
         public List<string> AbsoluteEpisodeNumber { get; set; }
         public bool AbsoluteNumering { get; set; }
+
+        public bool IsEmpty()
+        {
+            if (Series != null) return false;
+            if (Title.Count > 0) return false;
+            if (Source.Count > 0) return false;
+            if (Resolution.Count > 0) return false;
+            if (Audio.Count > 0) return false;
+            if (Season.Count > 0) return false;
+            if (Codec.Count > 0) return false;
+            if (Language.Count > 0) return false;
+            if (Daily.Count > 0) return false;
+            if (Special.Count > 0) return false;
+            if (Year.Count > 0) return false;
+            return true;
+        }
 
 
         public static bool AddItem(string newItem, List<string> Container)

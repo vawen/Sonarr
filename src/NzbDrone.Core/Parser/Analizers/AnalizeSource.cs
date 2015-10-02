@@ -9,7 +9,7 @@ namespace NzbDrone.Core.Parser.Analizers
             : base(new Regex(@"(\b|_)(?:
                               (?<bluray>BluRay|Blu-Ray|HDDVD|BD)|
                               (?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD)|
-                              (?<hdtv>HDTV)|
+                              (?<hdtv>HDTV|HD\sTV)|
                               (?<bdrip>BDRiP)|
                               (?<brrip>BRRip)|
                               (?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|
