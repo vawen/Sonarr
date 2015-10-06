@@ -13,6 +13,8 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
         public void should_use_passed_in_title_when_it_cannot_be_parsed()
         {
             const string title = "30 Rock";
+            var parseProvider = Mocker.Resolve<ParseProvider>();
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>())).Returns(parseProvider.ParseTitle(title));
 
             Subject.GetSeries(title);
 
@@ -25,6 +27,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
         {
             const string title = "30.Rock.S01E01.720p.hdtv";
             var parseProvider = Mocker.Resolve<ParseProvider>();
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>())).Returns(parseProvider.ParseTitle(title));
 
             Subject.GetSeries(title);
 
@@ -38,6 +41,8 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             const string title = "House.2004.S01E01.720p.hdtv";
             var parseProvider = Mocker.Resolve<ParseProvider>();
             var parsedEpisodeInfo = parseProvider.ParseTitle(title);
+
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>())).Returns(parsedEpisodeInfo);
 
             Subject.GetSeries(title);
 

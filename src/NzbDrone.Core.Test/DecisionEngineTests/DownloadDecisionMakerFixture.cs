@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -10,7 +11,6 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 using NzbDrone.Test.Common;
-using FizzWare.NBuilder;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
@@ -42,13 +42,14 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _pass1.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>(), null)).Returns(Decision.Accept);
             _pass2.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>(), null)).Returns(Decision.Accept);
             _pass3.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>(), null)).Returns(Decision.Accept);
-            
+
             _fail1.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>(), null)).Returns(Decision.Reject("fail1"));
             _fail2.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>(), null)).Returns(Decision.Reject("fail2"));
             _fail3.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>(), null)).Returns(Decision.Reject("fail3"));
 
             _reports = new List<ReleaseInfo> { new ReleaseInfo { Title = "The.Office.S03E115.DVDRip.XviD-OSiTV" } };
-            _remoteEpisode = new RemoteEpisode {
+            _remoteEpisode = new RemoteEpisode
+            {
                 Series = new Series(),
                 Episodes = new List<Episode> { new Episode() }
             };
@@ -56,6 +57,8 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IParsingService>()
                   .Setup(c => c.Map(It.IsAny<ParsedEpisodeInfo>(), It.IsAny<int>(), It.IsAny<SearchCriteriaBase>()))
                   .Returns(_remoteEpisode);
+
+            Mocker.SetConstant<IParseProvider>(new ParseProvider(TestLogger));
         }
 
         private void GivenSpecifications(params Mock<IDecisionEngineSpecification>[] mocks)
@@ -214,15 +217,15 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             var criteria = new SeasonSearchCriteria { Episodes = episodes.Take(1).ToList(), SeasonNumber = 1 };
 
-            var reports = episodes.Select(v => 
-                new ReleaseInfo() 
-                { 
-                    Title = string.Format("{0}.S{1:00}E{2:00}.720p.WEB-DL-DRONE", series.Title, v.SceneSeasonNumber, v.SceneEpisodeNumber) 
-                }).ToList();
+            var reports = episodes.Select(v =>
+                new ReleaseInfo()
+                {
+                    Title = string.Format("{0}.S{1:00}E{2:00}.720p.WEB-DL-DRONE", series.Title, v.SceneSeasonNumber, v.SceneEpisodeNumber)
+                }).ToList();           
 
             Mocker.GetMock<IParsingService>()
                 .Setup(v => v.Map(It.IsAny<ParsedEpisodeInfo>(), It.IsAny<int>(), It.IsAny<SearchCriteriaBase>()))
-                .Returns<ParsedEpisodeInfo, int, SearchCriteriaBase>((p,id,c) =>
+                .Returns<ParsedEpisodeInfo, int, SearchCriteriaBase>((p, id, c) =>
                     new RemoteEpisode
                     {
                         DownloadAllowed = true,

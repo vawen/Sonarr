@@ -3,16 +3,15 @@ using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
-    public class AnalizeResolution : AnalizeContent
+    public class AnalizeProper : AnalizeContent
     {
         private readonly Logger _logger;
 
-        public static readonly Regex ResolutionRegex = new Regex(@"(?:\b|_)(?:(?<_480p>480p|640x480|848x480)|(?<_576p>576p)|(?<_720p>720p|1280x720)|(?<_1080p>1080p|1920x1080))(?:\b|_)",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static readonly Regex ProperRegex = new Regex(@"(\dv(?<version>\d)|(\b|_)v(?<version>\d)|(\b|_)(?<proper>proper|repack))(\b|_)",
+                   RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
-
-        public AnalizeResolution(Logger logger)
-            : base(ResolutionRegex)
+        public AnalizeProper(Logger logger)
+            : base(ProperRegex)
         {
             _logger = logger;
         }
@@ -25,8 +24,8 @@ namespace NzbDrone.Core.Parser.Analizers
             {
                 foreach (var param in parsedItems)
                 {
-                    _logger.Debug("Detected Resolution: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Resolution);
+                    _logger.Debug("Detected Proper: {0}", param);
+                    ParsedInfo.AddItem(param, parsedInfo.Proper);
                 }
             }
             return ret;

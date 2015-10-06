@@ -12,15 +12,13 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
+    [Category("ParserTest")]
     public class CrapParserFixture : CoreTest<NewParseProvider>
     {
         [SetUp]
         public void Setup()
         {
-            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
-            /*Mocker.GetMock<ISeriesService>()
-                .Setup(p => p.FindByTitle(It.IsAny<string>()))
-                .Returns(null);*/
+            UseAnalizers();
         }
 
         [TestCase("76El6LcgLzqb426WoVFg1vVVVGx4uCYopQkfjmLe")]

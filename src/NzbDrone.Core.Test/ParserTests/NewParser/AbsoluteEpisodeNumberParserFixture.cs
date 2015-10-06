@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Parser.Analizers;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 
@@ -13,13 +13,14 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
+    [Category("ParserTest")]
     public class AbsoluteEpisodeNumberParserFixture : CoreTest<NewParseProvider>
     {
 
         [SetUp]
         public void Setup()
         {
-            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+            UseAnalizers();
         }
 
         [TestCase("[SubDESU]_High_School_DxD_07_(1280x720_x264-AAC)_[6B7FD717]", "High School DxD", 7, 0, 0)]
@@ -64,14 +65,14 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("Initial_D_Fifth_Stage_-_03(DVD)_-_(Central_Anime)[629BD592].mkv", "Initial D Fifth Stage", 3, 0, 0)]
         [TestCase("Initial D Fifth Stage - 14 DVD - Central Anime", "Initial D Fifth Stage", 14, 0, 0)]
         [TestCase("Initial_D_Fifth_Stage_-_14(DVD)_-_(Central_Anime)[0183D922].mkv", "Initial D Fifth Stage", 14, 0, 0)]
-        //        [TestCase("Initial D - 4th Stage Ep 01.mkv", "Initial D - 4th Stage", 1, 0, 0)]
+        [TestCase("Initial D - 4th Stage Ep 01.mkv", "Initial D - 4th Stage", 1, 0, 0)]
         [TestCase("[ChihiroDesuYo].No.Game.No.Life.-.09.1280x720.10bit.AAC.[24CCE81D]", "No Game No Life", 9, 0, 0)]
         [TestCase("Fairy Tail - 001 - Fairy Tail", "Fairy Tail", 001, 0, 0)]
         [TestCase("Fairy Tail - 049 - The Day of Fated Meeting", "Fairy Tail", 049, 0, 0)]
         [TestCase("Fairy Tail - 050 - Special Request Watch Out for the Guy You Like!", "Fairy Tail", 050, 0, 0)]
         [TestCase("Fairy Tail - 099 - Natsu vs. Gildarts", "Fairy Tail", 099, 0, 0)]
         [TestCase("Fairy Tail - 100 - Mest", "Fairy Tail", 100, 0, 0)]
-        //        [TestCase("Fairy Tail - 101 - Mest", "Fairy Tail", 101, 0, 0)] //This gets caught up in the 'see' numbering
+        [TestCase("Fairy Tail - 101 - Mest", "Fairy Tail", 101, 0, 0)] //This gets caught up in the 'see' numbering
         [TestCase("[Exiled-Destiny] Angel Beats Ep01 (D2201EC5).mkv", "Angel Beats", 1, 0, 0)]
         [TestCase("[Commie] Nobunaga the Fool - 23 [5396CA24].mkv", "Nobunaga the Fool", 23, 0, 0)]
         [TestCase("[FFF] Seikoku no Dragonar - 01 [1FB538B5].mkv", "Seikoku no Dragonar", 1, 0, 0)]
@@ -96,10 +97,46 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         //[TestCase("", "", 0, 0, 0)]
         public void should_parse_absolute_numbers(string postTitle, string title, int absoluteEpisodeNumber, int seasonNumber, int episodeNumber)
         {
+            List<Season> seasons;
+            List<Episode> episodes;
+
+            if (seasonNumber > 0)
+            {
+                seasons = Builder<Season>.CreateListOfSize(1)
+                    .TheFirst(1).With(s => s.SeasonNumber = seasonNumber)
+                    .Build().ToList();
+            }
+            else
+            {
+                seasons = Builder<Season>.CreateListOfSize(20)
+                    .Build().ToList();
+            }
+
+            if (episodeNumber > 0)
+            {
+                episodes = Builder<Episode>.CreateListOfSize(1)
+                    .TheFirst(1).With(s => s.EpisodeNumber = episodeNumber)
+                    .Build().ToList();
+            }
+            else
+            {
+                episodes = Builder<Episode>.CreateListOfSize(20).Build().ToList();
+            }
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.GetEpisodesBySeason(It.IsAny<int>(), It.IsAny<int>()))
+                .Returns(episodes);
+
+            var absoluteEpisode = Builder<Episode>.CreateNew().With(s => s.AbsoluteEpisodeNumber = absoluteEpisodeNumber).Build();
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.FindEpisode(It.IsAny<int>(), It.Is<int>(id => id == absoluteEpisodeNumber)))
+                .Returns(absoluteEpisode);
+
             var _title = title.NormalizeTitle();
             Mocker.GetMock<ISeriesService>()
                 .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
-                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime });
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime, Seasons = seasons });
 
             var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();
@@ -115,10 +152,21 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("[DeadFish] Kenzen Robo Daimidaler - 01 - OVD [BD][720p][AAC]", "Kenzen Robo Daimidaler", 1)]
         public void should_parse_absolute_specials(String postTitle, String title, Int32 absoluteEpisodeNumber)
         {
+            var seasons = Builder<Season>.CreateListOfSize(20).Build().ToList();
+            var episodes = Builder<Episode>.CreateListOfSize(20).Build().ToList();
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.GetEpisodesBySeason(It.IsAny<int>(), It.IsAny<int>()))
+                .Returns(episodes);
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.FindEpisode(It.IsAny<int>(), It.Is<int>(id => id == absoluteEpisodeNumber)))
+                .Returns(episodes.First());
+
             var _title = title.NormalizeTitle();
             Mocker.GetMock<ISeriesService>()
                 .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
-                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime });
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime, Seasons = seasons });
 
             var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();
@@ -137,10 +185,21 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("[RlsGrp] Series Title (2010) - S01E01-02 - 001-002 - Episode Title HDTV-720p v2", "Series Title (2010)", new[] { 1, 2 })]
         public void should_parse_multi_episode_absolute_numbers(string postTitle, string title, int[] absoluteEpisodeNumbers)
         {
+            var seasons = Builder<Season>.CreateListOfSize(20).Build().ToList();
+            var episodes = Builder<Episode>.CreateListOfSize(20).Build().ToList();
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.GetEpisodesBySeason(It.IsAny<int>(), It.IsAny<int>()))
+                .Returns(episodes);
+
             var _title = title.NormalizeTitle();
             Mocker.GetMock<ISeriesService>()
                 .Setup(p => p.FindByTitle(It.Is<string>(s => s == _title)))
-                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime });
+                .Returns(new Series { Title = title, CleanTitle = title.CleanSeriesTitle(), SeriesType = SeriesTypes.Anime, Seasons = seasons });
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.FindEpisode(It.IsAny<int>(), It.Is<int>(i => absoluteEpisodeNumbers.Contains(i))))
+                .Returns(episodes.First());
 
             var result = Subject.ParseTitle(postTitle);
             result.Should().NotBeNull();

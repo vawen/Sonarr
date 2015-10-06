@@ -1,38 +1,43 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
     public class AnalizeSource : AnalizeContent
     {
-        public AnalizeSource()
-            : base(new Regex(@"(\b|_)(?:
+        public readonly Logger _logger;
+
+        public static readonly Regex SourceRegex = new Regex(@"(\b|_)(?:
                               (?<bluray>BluRay|Blu-Ray|HDDVD|BD)|
                               (?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD)|
-                              (?<hdtv>HDTV|HD\sTV)|
+                              (?<hdtv>HDTV)|
+                              (?<hdtv720p>HD[-_. ]TV)|
                               (?<bdrip>BDRiP)|
                               (?<brrip>BRRip)|
                               (?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|
                               (?<dsr>WS[-_. ]DSR|DSR)|
                               (?<pdtv>PDTV)|
-                              (?<sdtv>SDTV)
+                              (?<sdtv>SD[-_. ]?TV)|
+                              (?<tvrip>TVRip)
                               )(\b|_)",
-                             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)) { }
+                             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
-        public override bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed)
+        public AnalizeSource(Logger logger)
+            : base(SourceRegex)
         {
-            string[] parsedItems;
+            _logger = logger;
+        }
+
+        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
+        {
+            ParsedItem[] parsedItems;
             bool ret = IsContent(item, out parsedItems, out notParsed);
             if (ret)
             {
                 foreach (var param in parsedItems)
                 {
-                    Console.Out.WriteLine("Item: {0}, Detected Source: {0}", item, param);
+                    _logger.Debug("Detected Source: {0}", param);
                     ParsedInfo.AddItem(param, parsedInfo.Source);
-                }
-                foreach (var str in notParsed)
-                {
-                    Console.Out.WriteLine("Not parsed: {0}", str);
                 }
             }
             return ret;

@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
+using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -12,12 +13,13 @@ using NzbDrone.Core.Tv;
 namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
     [TestFixture]
+    [Category("ParserTest")]
     public class IsPossibleSpecialEpisodeFixture : CoreTest<NewParseProvider>
     {
         [SetUp]
         public void Setup()
         {
-            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+            UseAnalizers();
         }
 
         [Test]
@@ -50,8 +52,13 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("Rookie.Blue.Behind.the.Badge.S05.Special.HDTV.x264-2HD")]
         public void IsPossibleSpecialEpisode_should_be_true(string title)
         {
+            var seasons = Builder<Season>.CreateListOfSize(2)
+                .TheFirst(1).With(s => s.SeasonNumber = 2)
+                .TheNext(1).With(s => s.SeasonNumber = 5)
+                .Build().ToList();
+
             Mocker.GetMock<ISeriesService>().Setup(o => o.FindByTitle(It.IsAny<string>()))
-                .Returns(new Series());
+                .Returns(new Series { Seasons = seasons });
             Subject.ParseTitle(title).IsPossibleSpecialEpisode.Should().BeTrue();
         }
     }

@@ -1,30 +1,31 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
     public class AnalizeHash : AnalizeContent
     {
 
-        public AnalizeHash()
-            : base(new Regex(@"(\b|_)(?<hash>\w{8})(\b|_)$",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)) { }
+        private readonly Logger _logger;
 
-        public override bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed)
+        public AnalizeHash(Logger logger)
+            : base(new Regex(@"(\b|_)(?<hash>\w{8})(\b|_)$",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
+        {
+            _logger = logger;
+        }
+
+        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
         {
 
-            string[] parsedItems;
+            ParsedItem[] parsedItems;
             bool ret = IsContent(item, out parsedItems, out notParsed);
             if (ret)
             {
                 foreach (var param in parsedItems)
                 {
-                    Console.Out.WriteLine("Item: {0}, Detected Hash: {0}", item, param);
+                    _logger.Debug("Detected Hash: {0}", param);
                     ParsedInfo.AddItem(param, parsedInfo.Hash);
-                }
-                foreach (var str in notParsed)
-                {
-                    Console.Out.WriteLine("Not parsed: {0}", str);
                 }
             }
             return ret;

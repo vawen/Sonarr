@@ -760,6 +760,10 @@
     <Compile Include="Notifications\Twitter\TwitterService.cs" />
     <Compile Include="Notifications\Twitter\TwitterSettings.cs" />
     <Compile Include="Parser\Analizers\AnalizeAbsoluteEpisodeNumber.cs" />
+    <Compile Include="Parser\Analizers\AnalizeReal.cs" />
+    <Compile Include="Parser\Analizers\AnalizeRawHD.cs" />
+    <Compile Include="Parser\Analizers\AnalizeProper.cs" />
+    <Compile Include="Parser\Analizers\AnalizeFileExtension.cs" />
     <Compile Include="Parser\Analizers\AnalizeYear.cs" />
     <Compile Include="Parser\Analizers\AnalizeSpecial.cs" />
     <Compile Include="Parser\Analizers\AnalizeDaily.cs" />

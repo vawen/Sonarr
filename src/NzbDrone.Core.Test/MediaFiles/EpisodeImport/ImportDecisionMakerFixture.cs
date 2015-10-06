@@ -72,6 +72,8 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport
                   .Returns(_localEpisode);
 
             GivenVideoFiles(new List<string> { @"C:\Test\Unsorted\The.Office.S03E115.DVDRip.XviD-OSiTV.avi".AsOsAgnostic() });
+
+            Mocker.SetConstant<IParseProvider>(new ParseProvider(TestLogger));
         }
 
         private void GivenSpecifications(params Mock<IImportDecisionEngineSpecification>[] mocks)

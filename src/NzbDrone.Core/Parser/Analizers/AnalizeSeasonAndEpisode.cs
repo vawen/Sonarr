@@ -1,42 +1,71 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
     public class AnalizeSeason : AnalizeContent
     {
+        private readonly Logger _logger;
+
+        /*        public static readonly Regex SimpleSeason = new Regex(
+                       @"(?:\b|_)(?:S?(?<season>(?<!\d)(?:0?\d{1,2}|\d{4})(?!\d+))(?:(?:\-|[ex]|\W[ex]|ep|\Wep|_|\s){1,3}(?<episode>\d{1,5})(?!\d+))+)(?:\b|_)",
+                       RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);*/
+        public static readonly Regex WeirdSeason = new Regex(
+            @"(?:\b|_)(?:S?(?<season>(?<!\d)(?:0?\d{1,2}|\d{4})(?!\d+)))(?:\-|[ex]|\W[ex]|ep|\Wep|_)(?<episode>\d{1,5})(?:(?:\s-\s)(?:\-|[ex]|ep|_)(?<episode>\d{1,5}))(?:\b|_)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Regex SimpleSeason = new Regex(
-               @"(?:\b|_)(?:S?(?<season>(?<!\d)(?:\d{1,2}|\d{4})(?!\d+))(?:(?:\-|[ex]|\W[ex]|_)(?<episode>\d{1,3})(?!\d+))+)(?:\b|_)",
-               RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+            @"(?:\b|_)(?:S?(?<season>(?<!\d)(?:0?\d{1,2}|\d{4})(?!\d+)))(?:\-|[ex]|\W[ex]|ep|\Wep|_)(?<episode>\d{1,5})((?:\W?(?<anchor>\-|[ex]|ep|_)\W?(?<episode>\d{1,5}))?(?:\W?\k<anchor>\W?(?<episode>\d{1,5}))*)(?:\b|_)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Regex SimpleMiniSerie = new Regex(
-            @"(?:(?:\b|_)(?:(?:Part\W?|(?<!\d\W)e)(?<episode>\d{1,2}(?!\d+)))+)",
+            @"(?:(?:\b|_)(?:(?:Part\W?|(?<!\d\W)ep?)(?<episode>\d{1,2}(?!\d+)))+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+
+        public static readonly Regex SeasonAndEpisodeWord = new Regex(
+            @"(\b|_)(?:\W?Season\W?)(?<season>(?<!\d)\d{1,3}(?!\d+))(?:\W|_)+(?:Episode\W)(?:[-_. ]?(?<episode>(?<!\d)\d{1,2}(?!\d+)))+(\b|_)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+
+        public static readonly Regex OnlyDigitsOrEp = new Regex(
+            @"(\b|_)(?<!\d)(?<season>\d{1,2})(?:(?:\-|[ex]|\W[ex]|ep|_)?(?<episode>\d{2}))+(\b|_)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+
+        public static readonly Regex OnlySeason = new Regex(
+            @"(?:\b|_)(?:(?:\W?Season\W?)(?<season>(?<!\d)\d{1,2}(?!\d+))|(?:S\W?(?<!\d)(?<season>\d{1,2}|\d{4})(?!\d+)))(?:\b|_)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
 
-        public AnalizeSeason()
+        public AnalizeSeason(Logger logger)
             : base(new Regex[] {
-                new Regex(@"(?:\b|_)(?:S?(?<!\d)(?:\d{1,2}|\d{4})(?!\d+)(?:(?:\-|[ex]|\W[ex]|_)\d{2,3}(?!\d+))+)(?:\b|_)",
+                new Regex(@"(\b|_)(?:\W?Season\W?)(?:(?<!\d)\d{1,2}(?!\d+))(?:\W|_)+(?:Episode\W)(?:[-_. ]?(?:(?<!\d)\d{1,2}(?!\d+)))+(\b|_)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
-                new Regex(@"(?:(?:\b|_)(?:(?:Part\W?|(?<!\d\W)e)(?:\d{1,2}(?!\d+)))+(?:\b|_))",
-                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)
-            }) { }
-
-        public override bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed)
+                new Regex(@"(?:\b|_)(?:S?(?:(?<!\d)(?:0?\d{1,2}|\d{4})(?!\d+)))(?:\-|[ex]|\W[ex]|ep|\Wep|_)(?:\d{1,5})(?:(?:\s-\s)(?:\-|[ex]|ep|_)(?:\d{1,5}))(?:\b|_)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase),
+                new Regex(@"(?:\b|_)(?:S?(?:(?<!\d)(?:0?\d{1,2}|\d{4})(?!\d+)))(?:\-|[ex]|\W[ex]|ep|\Wep|_|\s)(?:\d{1,5})((?:\W?(?<anchor>\-|[ex]|ep|_|\s)\W?(?:\d{1,5}))?(?:\W?\k<anchor>\W?(?:\d{1,5}))*)(?:\b|_)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
+                new Regex(@"(?:(?:\b|_)(?:(?:Part\W?|(?<!\d\W)ep?)(?:\d{1,2}(?!\d+)))+(?:\b|_))",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
+                new Regex(@"(\b|_)(?<!\d)(?:\d{1,2})(?:(?:\-|[ex]|\W[ex]|ep|_)?(?:\d{2}))+(\b|_)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
+                new Regex(@"(\b|_)(?:\W?Season\W?)(?:(?<!\d)\d{1,3}(?!\d+))(\b|_)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
+                new Regex(@"(?:\b|_)(?:S\W?(?<!\d)(?:\d{1,3}|\d{4})(?!\d+))(?:\b|_)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),
+            })
         {
-            string[] parsedItems;
+            _logger = logger;
+        }
+
+        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
+        {
+            ParsedItem[] parsedItems;
             bool ret = IsContent(item, out parsedItems, out notParsed);
             if (ret)
             {
                 foreach (var param in parsedItems)
                 {
-                    Console.Out.WriteLine("Item: {0}, Detected Season: {0}", item, param);
+                    _logger.Debug("Detected Season: {0}", param);
                     ParsedInfo.AddItem(param, parsedInfo.Season);
-                }
-                foreach (var str in notParsed)
-                {
-                    Console.Out.WriteLine("Not parsed: {0}", str);
                 }
             }
             return ret;

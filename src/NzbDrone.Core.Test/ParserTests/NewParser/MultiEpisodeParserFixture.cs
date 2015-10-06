@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
+using System.Linq;
+using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -12,12 +13,13 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
+    [Category("ParserTest")]
     public class MultiEpisodeParserFixture : CoreTest<NewParseProvider>
     {
         [SetUp]
         public void Setup()
         {
-            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+            UseAnalizers();
         }
 
         [TestCase("WEEDS.S03E01-06.DUAL.BDRip.XviD.AC3.-HELLYWOOD", "WEEDS", 3, new[] { 1, 2, 3, 4, 5, 6 })]
@@ -50,22 +52,37 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("World Series of Poker - 2013x15 - 2013x16 - HD TV.mkv", "World Series of Poker", 2013, new[] { 15, 16 })]
         [TestCase("The Librarians US S01E01-E02 720p HDTV x264", "The Librarians US", 1, new[] { 1, 2 })]
         [TestCase("Series Title Season 01 Episode 05-06 720p", "Series Title", 1, new[] { 5, 6 })]
-        //[TestCase("My Name Is Earl - S03E01-E02 - My Name Is Inmate 28301-016 [SDTV]", "My Name Is Earl", 3, new[] { 1, 2 })]
-        //[TestCase("Adventure Time - 5x01 - x02 - Finn the Human (2) & Jake the Dog (3)", "Adventure Time", 5, new [] { 1, 2 })]
+        [TestCase("My Name Is Earl - S03E01-E02 - My Name Is Inmate 28301-016 [SDTV]", "My Name Is Earl", 3, new[] { 1, 2 })]
+        [TestCase("Adventure Time - 5x01 - x02 - Finn the Human (2) & Jake the Dog (3)", "Adventure Time", 5, new[] { 1, 2 })]
         [TestCase("The Young And The Restless - S42 Ep10718 - Ep10722", "The Young And The Restless", 42, new[] { 10718, 10719, 10720, 10721, 10722 })]
         [TestCase("The Young And The Restless - S42 Ep10688 - Ep10692", "The Young And The Restless", 42, new[] { 10688, 10689, 10690, 10691, 10692 })]
         //[TestCase("", "", ,new [] {  })]
         public void should_parse_multiple_episodes(string postTitle, string title, int season, int[] episodes)
         {
+            var seasons = Builder<Season>.CreateListOfSize(1)
+                .TheFirst(1).With(s => s.SeasonNumber = season)
+                .Build().ToList();
+
+            var ep = Builder<Episode>.CreateListOfSize(episodes.MaxOrDefault() + 1).Build().ToList();
+
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.GetEpisodesBySeason(It.IsAny<int>(), It.IsAny<int>()))
+                .Returns(ep);
+
             var _title = title.NormalizeTitle();
-            Mocker.GetMock<ISeriesService>()
-                .Setup(o => o.FindByTitle(It.Is<string>(s => s == _title)))
-                .Returns(new Series
-                {
-                    Title = title,
-                    CleanTitle = title.CleanSeriesTitle(),
-                    SeriesType = SeriesTypes.Standard
-                });
+
+            if (_title.Length > 0)
+            {
+                Mocker.GetMock<ISeriesService>()
+                    .Setup(o => o.FindByTitle(It.Is<string>(s => s == _title)))
+                    .Returns(new Series
+                    {
+                        Title = title,
+                        CleanTitle = title.CleanSeriesTitle(),
+                        SeriesType = SeriesTypes.Standard,
+                        Seasons = seasons
+                    });
+            }
 
             var result = Subject.ParseTitle(postTitle);
             result.SeasonNumber.Should().Be(season);

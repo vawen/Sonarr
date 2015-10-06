@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
     public interface IAnalizeContent
     {
-        bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed);
+        bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed);
     }
 
     public abstract class AnalizeContent : IAnalizeContent
@@ -24,34 +23,37 @@ namespace NzbDrone.Core.Parser.Analizers
 
         protected Regex[] RegexArray { get; set; }
 
-        public abstract bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed);
+        public abstract bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed);
 
-        public bool IsContent(string item, out string[] parsedInfo, out string[] notParsed)
+        public bool IsContent(ParsedItem item, out ParsedItem[] parsedItems, out ParsedItem[] notParsed)
         {
             foreach (var Regex in RegexArray)
             {
-                if (Regex.IsMatch(item))
+                if (Regex.IsMatch(item.Value))
                 {
-                    var _parsedInfo = new List<string>();
-                    var regexMatch = Regex.Matches(item);
-                    var split =
-                        Regex.Split(item)
-                            .Where(s => s.Length > 0 && s.Any(char.IsLetterOrDigit))
-                            .Select(s => s.Trim())
-                            .ToList();
+                    var _parsedItems = new List<ParsedItem>();
+                    var _splitInfo = new List<ParsedItem>();
+                    var regexMatch = Regex.Matches(item.Value);
 
-                    foreach (var group in regexMatch)
+                    foreach (Match match in regexMatch)
                     {
-                        split.Remove(group.ToString());
-                        _parsedInfo.Add(group.ToString());
+                        var parsedItem = new ParsedItem
+                            {
+                                Value = match.Value,
+                                Length = match.Length,
+                                Position = item.Position + match.Index,
+                                GlobalLength = item.GlobalLength
+                            };
+                        _parsedItems.Add(parsedItem);
+                        _splitInfo.AddRange(item.Split(parsedItem));
                     }
 
-                    notParsed = split.ToArray();
-                    parsedInfo = _parsedInfo.ToArray();
+                    notParsed = _splitInfo.ToArray();
+                    parsedItems = _parsedItems.ToArray();
                     return true;
                 }
             }
-            parsedInfo = null;
+            parsedItems = null;
             notParsed = null;
             return false;
         }

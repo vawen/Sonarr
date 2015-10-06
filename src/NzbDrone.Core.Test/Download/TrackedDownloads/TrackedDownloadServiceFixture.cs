@@ -1,16 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
+using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
-using NzbDrone.Core.Indexers;
-using System.Linq;
 
 namespace NzbDrone.Core.Test.Download.TrackedDownloads
 {
@@ -29,6 +29,8 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
                      EpisodeId = 4
                  }
                 });
+
+            Mocker.SetConstant<IParseProvider>(new ParseProvider(TestLogger));
         }
 
         [Test]

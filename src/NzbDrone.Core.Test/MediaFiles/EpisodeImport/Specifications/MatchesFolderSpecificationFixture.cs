@@ -1,7 +1,9 @@
 ﻿using FizzWare.NBuilder;
 using FluentAssertions;
+using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.MediaFiles.EpisodeImport.Specifications;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -20,7 +22,7 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
                                                  .With(l => l.Path = @"C:\Test\Unsorted\Series.Title.S01E01.720p.HDTV-Sonarr\S01E05.mkv".AsOsAgnostic())
                                                  .With(l => l.ParsedEpisodeInfo =
                                                      Builder<ParsedEpisodeInfo>.CreateNew()
-                                                                               .With(p => p.EpisodeNumbers = new[] {5})
+                                                                               .With(p => p.EpisodeNumbers = new[] { 5 })
                                                                                .With(p => p.FullSeason = false)
                                                                                .Build())
                                                  .Build();
@@ -45,6 +47,9 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
         [Test]
         public void should_should_be_accepted_for_full_season()
         {
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>()))
+                     .Returns(new ParsedEpisodeInfo { SeriesTitle = "Series Title", SeasonNumber = 1, FullSeason = true });
+
             _localEpisode.Path = @"C:\Test\Unsorted\Series.Title.S01\S01E01.mkv".AsOsAgnostic();
 
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeTrue();
@@ -53,6 +58,9 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
         [Test]
         public void should_be_accepted_if_file_and_folder_have_the_same_episode()
         {
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>()))
+                     .Returns(new ParsedEpisodeInfo { SeriesTitle = "Series Title", SeasonNumber = 1, EpisodeNumbers = new int[] { 1 } });
+
             _localEpisode.ParsedEpisodeInfo.EpisodeNumbers = new[] { 1 };
             _localEpisode.Path = @"C:\Test\Unsorted\Series.Title.S01E01.720p.HDTV-Sonarr\S01E01.mkv".AsOsAgnostic();
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeTrue();
@@ -61,21 +69,30 @@ namespace NzbDrone.Core.Test.MediaFiles.EpisodeImport.Specifications
         [Test]
         public void should_be_accepted_if_file_is_one_episode_in_folder()
         {
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>()))
+                     .Returns(new ParsedEpisodeInfo { SeriesTitle = "Series Title", SeasonNumber = 1, EpisodeNumbers = new int[] { 1, 2 } });
+
             _localEpisode.ParsedEpisodeInfo.EpisodeNumbers = new[] { 1 };
             _localEpisode.Path = @"C:\Test\Unsorted\Series.Title.S01E01E02.720p.HDTV-Sonarr\S01E01.mkv".AsOsAgnostic();
-            Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeTrue();            
+            Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeTrue();
         }
 
         [Test]
         public void should_be_rejected_if_file_and_folder_do_not_have_same_episode()
         {
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>()))
+                     .Returns(new ParsedEpisodeInfo { SeriesTitle = "Series Title", SeasonNumber = 1, EpisodeNumbers = new int[] { 1 } });
+
             _localEpisode.Path = @"C:\Test\Unsorted\Series.Title.S01E01.720p.HDTV-Sonarr\S01E05.mkv".AsOsAgnostic();
-            Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeFalse();            
+            Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeFalse();
         }
 
         [Test]
         public void should_be_rejected_if_file_and_folder_do_not_have_same_episodes()
         {
+            Mocker.GetMock<IParseProvider>().Setup(c => c.ParseTitle(It.IsAny<string>()))
+                     .Returns(new ParsedEpisodeInfo { SeriesTitle = "Series Title", SeasonNumber = 1, EpisodeNumbers = new int[] { 1, 2 } });
+
             _localEpisode.ParsedEpisodeInfo.EpisodeNumbers = new[] { 5, 6 };
             _localEpisode.Path = @"C:\Test\Unsorted\Series.Title.S01E01E02.720p.HDTV-Sonarr\S01E05E06.mkv".AsOsAgnostic();
             Subject.IsSatisfiedBy(_localEpisode).Accepted.Should().BeFalse();

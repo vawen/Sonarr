@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FizzWare.NBuilder;
+using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Disk;
@@ -14,7 +15,6 @@ using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 using NzbDrone.Test.Common;
-using FluentAssertions;
 
 namespace NzbDrone.Core.Test.MediaFiles
 {
@@ -40,6 +40,8 @@ namespace NzbDrone.Core.Test.MediaFiles
             Mocker.GetMock<IImportApprovedEpisodes>()
                   .Setup(s => s.Import(It.IsAny<List<ImportDecision>>(), true, null))
                   .Returns(new List<ImportResult>());
+
+            Mocker.SetConstant<IParseProvider>(new ParseProvider(TestLogger));
         }
 
         private void GivenValidSeries()
@@ -66,7 +68,7 @@ namespace NzbDrone.Core.Test.MediaFiles
                   .Returns(true);
 
             Subject.ProcessRootFolder(new DirectoryInfo(_droneFactory));
-            
+
             VerifyNoImport();
         }
 
@@ -244,7 +246,7 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             Mocker.GetMock<IDiskProvider>()
                   .Setup(s => s.GetFiles(It.IsAny<string>(), SearchOption.AllDirectories))
-                  .Returns(new []{ _videoFiles.First().Replace(".ext", ".rar") });
+                  .Returns(new[] { _videoFiles.First().Replace(".ext", ".rar") });
 
             Mocker.GetMock<IDiskProvider>()
                   .Setup(s => s.GetFileSize(It.IsAny<string>()))

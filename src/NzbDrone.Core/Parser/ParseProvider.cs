@@ -14,7 +14,7 @@ namespace NzbDrone.Core.Parser
     public class ParseProvider : IParseProvider
     {
 
-        static class Parser
+        private static class Parser
         {
             private static readonly Logger Logger = NzbDroneLogger.GetLogger(typeof(Parser));
 
@@ -340,20 +340,6 @@ namespace NzbDrone.Core.Parser
 
                 Logger.Debug("Unable to parse {0}", title);
                 return null;
-            }
-
-            private static string ParseSeriesName(string title)
-            {
-                Logger.Debug("Parsing string '{0}'", title);
-
-                var parseResult = ParseTitle(title);
-
-                if (parseResult == null)
-                {
-                    return title.CleanSeriesTitle();
-                }
-
-                return parseResult.SeriesTitle;
             }
 
             public static string ParseReleaseGroup(string title)

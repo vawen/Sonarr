@@ -12,6 +12,7 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.EpisodeImport;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Qualities;
@@ -71,6 +72,8 @@ namespace NzbDrone.Core.Test.MediaFiles
                   .Returns(new EpisodeFileMoveResult());
 
             _downloadClientItem = Builder<DownloadClientItem>.CreateNew().Build();
+
+            Mocker.SetConstant<IParseProvider>(new ParseProvider(TestLogger));
         }
 
         [Test]
@@ -95,7 +98,7 @@ namespace NzbDrone.Core.Test.MediaFiles
             all.AddRange(_approvedDecisions);
 
             var result = Subject.Import(all, false);
-            
+
             result.Should().HaveCount(all.Count);
             result.Where(i => i.Result == ImportResultType.Imported).Should().HaveCount(_approvedDecisions.Count);
         }

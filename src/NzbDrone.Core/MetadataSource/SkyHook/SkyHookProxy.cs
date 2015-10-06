@@ -16,14 +16,12 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
     public class SkyHookProxy : IProvideSeriesInfo, ISearchForNewSeries
     {
         private readonly IHttpClient _httpClient;
-        private readonly IParseProvider _parseProvider;
         private readonly Logger _logger;
         private readonly HttpRequestBuilder _requestBuilder;
 
-        public SkyHookProxy(IHttpClient httpClient, IParseProvider parseProvider, Logger logger)
+        public SkyHookProxy(IHttpClient httpClient, Logger logger)
         {
             _httpClient = httpClient;
-            _parseProvider = parseProvider;
             _logger = logger;
 
             _requestBuilder = new HttpRequestBuilder("http://skyhook.sonarr.tv/v1/tvdb/{route}/en/");

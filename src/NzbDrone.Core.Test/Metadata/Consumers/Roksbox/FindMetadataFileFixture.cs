@@ -4,6 +4,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Metadata;
 using NzbDrone.Core.Metadata.Consumers.Roksbox;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 using NzbDrone.Test.Common;
@@ -21,6 +22,8 @@ namespace NzbDrone.Core.Test.Metadata.Consumers.Roksbox
             _series = Builder<Series>.CreateNew()
                                      .With(s => s.Path = @"C:\Test\TV\The.Series".AsOsAgnostic())
                                      .Build();
+
+            Mocker.SetConstant<IParseProvider>(new ParseProvider(TestLogger));
         }
 
         [Test]

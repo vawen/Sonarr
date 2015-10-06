@@ -1,34 +1,35 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
     public class AnalizeAbsoluteEpisodeNumber : AnalizeContent
     {
+        private readonly Logger _logger;
+
         public static readonly Regex SimpleAbsoluteNumber = new Regex(@"(?:\b|[-_])(?<!\d[-_.])(?:(e|ep)?(?<absoluteepisode>\d{2,3})(?:[-._\s]?))+(?:v\d{1})?(?<!\d{4}[-._\s])(?<!\d{4})(?:\b|_|\b)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 
-        public AnalizeAbsoluteEpisodeNumber()
+        public AnalizeAbsoluteEpisodeNumber(Logger logger)
             : base(new Regex[] {
                 new Regex(@"(?:\b|[-_])(?<!\d[-_.])(?:(e|ep)?\d{2,3}(?:[-._\s]?))+(?:v\d{1})?(?<!\d{4}[-._\s])(?<!\d{4})(?:\b|_|\b)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)
-            }) { }
-
-        public override bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed)
+            })
         {
-            string[] parsedItems;
+            _logger = logger;
+        }
+
+        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
+        {
+            ParsedItem[] parsedItems;
             bool ret = IsContent(item, out parsedItems, out notParsed);
             if (ret)
             {
                 foreach (var param in parsedItems)
                 {
-                    Console.Out.WriteLine("Item: {0}, Detected Absolute: {0}", item, param);
+                    _logger.Debug("Detected Absolute: {0}", param);
                     ParsedInfo.AddItem(param, parsedInfo.AbsoluteEpisodeNumber);
-                }
-                foreach (var str in notParsed)
-                {
-                    Console.Out.WriteLine("Not parsed: {0}", str);
                 }
             }
             return ret;

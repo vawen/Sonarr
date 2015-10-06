@@ -1,29 +1,32 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
 {
     public class AnalizeCodec : AnalizeContent
     {
 
-        public AnalizeCodec()
-            : base(new Regex(@"(\b|_)(?:(?<x264>x264)|(?<h264>h\.?264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))(\b|_)",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)) { }
+        private readonly Logger _logger;
 
-        public override bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed)
+        public static readonly Regex CodecRegex = new Regex(@"(\b|_)?(?:(?<x264>x264)|(?<h264>h(\.|\s)?264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))(\b|_)?",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+
+        public AnalizeCodec(Logger logger)
+            : base(CodecRegex)
         {
-            string[] parsedItems;
+            _logger = logger;
+        }
+
+        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
+        {
+            ParsedItem[] parsedItems;
             bool ret = IsContent(item, out parsedItems, out notParsed);
             if (ret)
             {
                 foreach (var param in parsedItems)
                 {
-                    Console.Out.WriteLine("Item: {0}, Detected Codec: {0}", item, param);
+                    _logger.Debug("Detected Codec: {0}", param);
                     ParsedInfo.AddItem(param, parsedInfo.Codec);
-                }
-                foreach (var str in notParsed)
-                {
-                    Console.Out.WriteLine("Not parsed: {0}", str);
                 }
             }
             return ret;

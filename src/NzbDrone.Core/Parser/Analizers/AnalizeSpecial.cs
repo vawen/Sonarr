@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using NLog;
 
 namespace NzbDrone.Core.Parser.Analizers
@@ -8,24 +7,23 @@ namespace NzbDrone.Core.Parser.Analizers
     {
         private readonly Logger _logger;
 
-        public AnalizeSpecial()
+        public AnalizeSpecial(Logger logger)
             : base(new Regex(@"(\b|_)(?:special|ova|ovd)(\b|_)",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase)) { }
-
-        public override bool IsContent(string item, ParsedInfo parsedInfo, out string[] notParsed)
+                RegexOptions.Compiled | RegexOptions.IgnoreCase))
         {
-            string[] parsedItems;
+            _logger = logger;
+        }
+
+        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
+        {
+            ParsedItem[] parsedItems;
             bool ret = IsContent(item, out parsedItems, out notParsed);
             if (ret)
             {
                 foreach (var param in parsedItems)
                 {
-                    Console.Out.WriteLine("Item: {0}, Detected Special: {0}", item, param);
+                    _logger.Debug("Detected Special: {0}", param);
                     ParsedInfo.AddItem(param, parsedInfo.Special);
-                }
-                foreach (var str in notParsed)
-                {
-                    Console.Out.WriteLine("Not parsed: {0}", str);
                 }
             }
             return ret;

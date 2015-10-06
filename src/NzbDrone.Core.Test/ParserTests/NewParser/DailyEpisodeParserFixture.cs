@@ -13,12 +13,13 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
 {
 
     [TestFixture]
+    [Category("ParserTest")]
     public class DailyEpisodeParserFixture : CoreTest<NewParseProvider>
     {
         [SetUp]
         public void Setup()
         {
-            Subject.SetAnalizers(new List<IAnalizeContent> { new AnalizeAudio(), new AnalizeCodec(), new AnalizeDaily(), new AnalizeHash(), new AnalizeLanguage(), new AnalizeResolution(), new AnalizeSeason(), new AnalizeSource(), new AnalizeSpecial(), new AnalizeYear(), new AnalizeAbsoluteEpisodeNumber() });
+            UseAnalizers();
         }
 
         [TestCase("Conan 2011 04 18 Emma Roberts HDTV XviD BFF", "Conan", 2011, 04, 18)]
@@ -35,7 +36,7 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("The_Voice_US_04.28.2014_hdtv.x264.Poke.mp4", "The Voice US", 2014, 4, 28)]
         [TestCase("At.Midnight.140722.720p.HDTV.x264-YesTV", "At Midnight", 2014, 07, 22)]
         [TestCase("At_Midnight_140722_720p_HDTV_x264-YesTV", "At Midnight", 2014, 07, 22)]
-        //[TestCase("Corrie.07.01.15", "Corrie", 2015, 1, 7)]
+        [TestCase("Corrie.07.01.15", "Corrie", 2015, 1, 7)]
         [TestCase("The Nightly Show with Larry Wilmore 2015 02 09 WEBRIP s01e13", "The Nightly Show with Larry Wilmore", 2015, 2, 9)]
         //[TestCase("", "", 0, 0, 0)]
         public void should_parse_daily_episode(string postTitle, string title, int year, int month, int day)
@@ -64,6 +65,10 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("2020.NZ.{year}.{month}.{day}.PDTV.XviD-C4TV")]
         public void should_not_accept_ancient_daily_series(string title)
         {
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.IsAny<string>()))
+                .Returns(new Series { SeriesType = SeriesTypes.Daily });
+
             var yearTooLow = title.Expand(new { year = 1950, month = 10, day = 14 });
             Subject.ParseTitle(yearTooLow).Should().BeNull();
         }
@@ -77,6 +82,10 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [TestCase("2020.NZ.{year}.{month}.{day}.PDTV.XviD-C4TV")]
         public void should_not_accept_future_dates(string title)
         {
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.IsAny<string>()))
+                .Returns(new Series { SeriesType = SeriesTypes.Daily });
+
             var twoDaysFromNow = DateTime.Now.AddDays(2);
 
             var validDate = title.Expand(new { year = twoDaysFromNow.Year, month = twoDaysFromNow.Month.ToString("00"), day = twoDaysFromNow.Day.ToString("00") });
@@ -87,6 +96,10 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [Test]
         public void should_fail_if_episode_is_far_in_future()
         {
+            Mocker.GetMock<ISeriesService>()
+                .Setup(p => p.FindByTitle(It.IsAny<string>()))
+                .Returns(new Series { SeriesType = SeriesTypes.Daily });
+
             var title = string.Format("{0:yyyy.MM.dd} - Denis Leary - HD TV.mkv", DateTime.Now.AddDays(2));
 
             Subject.ParseTitle(title).Should().BeNull();
