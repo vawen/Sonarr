@@ -2,10 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NLog;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Parser
 {
+    public enum InfoCategories
+    {
+        Title = 1,
+        Source
+    }
+
     public class ParsedItem
     {
         public string Value { get; set; }
@@ -160,7 +167,13 @@ namespace NzbDrone.Core.Parser
         public List<ParsedItem> Proper { get; set; }
         public List<ParsedItem> RawHD { get; set; }
         public List<ParsedItem> Real { get; set; }
+        public List<ParsedItem> UnknownInfo { get; set; }
         public bool AbsoluteNumering { get; set; }
+
+        public void PrintMap(Logger log)
+        {
+
+        }
 
         public bool IsEmpty()
         {
@@ -228,6 +241,7 @@ namespace NzbDrone.Core.Parser
             Proper = new List<ParsedItem>();
             RawHD = new List<ParsedItem>();
             Real = new List<ParsedItem>();
+            UnknownInfo = new List<ParsedItem>();
         }
 
         public void RemoveFromAll(ParsedItem item)

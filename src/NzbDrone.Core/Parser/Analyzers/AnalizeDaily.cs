@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeDaily : AnalizeContent
+    public class AnalyzeDaily : AnalyzeContent
     {
         private readonly Logger _logger;
 
@@ -17,7 +17,7 @@ namespace NzbDrone.Core.Parser.Analizers
                                                                         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 
-        public AnalizeDaily(Logger logger)
+        public AnalyzeDaily(Logger logger)
             : base(new Regex[] {
                 new Regex(@"(?:\b|_)(?:\d{4}\W+[0-1][0-9]\W+[0-3][0-9]|[0-1][0-9]\W+[0-3][0-9]\W+\d{4}|[1-9]\d{1}[0-1][0-9][0-3][0-9])(?:\b|_)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),

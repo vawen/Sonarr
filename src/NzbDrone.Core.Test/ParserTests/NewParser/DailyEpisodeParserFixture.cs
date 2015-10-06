@@ -5,7 +5,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Expansive;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Parser.Analizers;
+using NzbDrone.Core.Parser.Analyzers;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Tv;
 
@@ -19,7 +19,7 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [SetUp]
         public void Setup()
         {
-            UseAnalizers();
+            UseAnalyzers();
         }
 
         [TestCase("Conan 2011 04 18 Emma Roberts HDTV XviD BFF", "Conan", 2011, 04, 18)]

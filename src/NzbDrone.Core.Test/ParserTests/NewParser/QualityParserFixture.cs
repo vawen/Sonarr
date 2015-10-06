@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Parser.Analizers;
+using NzbDrone.Core.Parser.Analyzers;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 
@@ -42,7 +42,7 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [SetUp]
         public void Setup()
         {
-            UseAnalizers();
+            UseAnalyzers();
         }
 
         [TestCase("S07E23 .avi ", false)]

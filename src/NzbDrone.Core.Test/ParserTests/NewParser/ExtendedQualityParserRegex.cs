@@ -13,7 +13,7 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [SetUp]
         public void Setup()
         {
-            UseAnalizers();
+            UseAnalyzers();
         }
 
         [TestCase("Chuck.S04E05.HDTV.XviD-LOL", 0)]

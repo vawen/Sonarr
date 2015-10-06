@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeLanguage : AnalizeContent
+    public class AnalyzeLanguage : AnalyzeContent
     {
         private readonly Logger _logger;
 
@@ -13,7 +13,7 @@ namespace NzbDrone.Core.Parser.Analizers
         public static readonly Regex LanguageRegex = new Regex(@"(?:\W|_)(?<italian>\b(?:ita|italian)\b)|(?<german>german\b|videomann)|(?<flemish>flemish)|(?<greek>greek)|(?<french>(?:\W|_)(?:FR|VOSTFR)(?:\W|_))|(?<russian>\brus\b)|(?<dutch>nl\W?subs?)|(?<hungarian>\b(?:HUNDUB|HUN)\b)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        public AnalizeLanguage(Logger logger)
+        public AnalyzeLanguage(Logger logger)
             : base(new Regex[] 
             {
                 SimpleLanguageRegex,

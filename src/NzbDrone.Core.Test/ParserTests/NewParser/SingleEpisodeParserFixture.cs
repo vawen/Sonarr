@@ -17,7 +17,7 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [SetUp]
         public void Setup()
         {
-            UseAnalizers();
+            UseAnalyzers();
         }
 
         [TestCase("Sonny.With.a.Chance.S02E15", "Sonny With a Chance", 2, 15)]

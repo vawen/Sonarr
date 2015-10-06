@@ -4,7 +4,7 @@ using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Parser;
-using NzbDrone.Core.Parser.Analizers;
+using NzbDrone.Core.Parser.Analyzers;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
@@ -18,7 +18,7 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
         [SetUp]
         public void Setup()
         {
-            UseAnalizers();
+            UseAnalyzers();
         }
 
         [TestCase("76El6LcgLzqb426WoVFg1vVVVGx4uCYopQkfjmLe")]

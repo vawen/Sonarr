@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeSource : AnalizeContent
+    public class AnalyzeSource : AnalyzeContent
     {
         public readonly Logger _logger;
 
@@ -22,7 +22,7 @@ namespace NzbDrone.Core.Parser.Analizers
                               )(\b|_)",
                              RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
-        public AnalizeSource(Logger logger)
+        public AnalyzeSource(Logger logger)
             : base(SourceRegex)
         {
             _logger = logger;

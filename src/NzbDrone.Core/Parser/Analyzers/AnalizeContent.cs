@@ -1,22 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public interface IAnalizeContent
+    public interface IAnalyzeContent
     {
         bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed);
     }
 
-    public abstract class AnalizeContent : IAnalizeContent
+    public abstract class AnalyzeContent : IAnalyzeContent
     {
 
-        public AnalizeContent(Regex regex)
+        public AnalyzeContent(Regex regex)
         {
             RegexArray = new Regex[] { regex };
         }
 
-        public AnalizeContent(Regex[] regex)
+        public AnalyzeContent(Regex[] regex)
         {
             RegexArray = regex;
         }

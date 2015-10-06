@@ -5,7 +5,7 @@ using NzbDrone.Common.Cache;
 using NzbDrone.Common.Cloud;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.TPL;
-using NzbDrone.Core.Parser.Analizers;
+using NzbDrone.Core.Parser.Analyzers;
 using NzbDrone.Test.Common;
 
 namespace NzbDrone.Core.Test.Framework
@@ -24,25 +24,25 @@ namespace NzbDrone.Core.Test.Framework
             Mocker.SetConstant<IDroneServicesRequestBuilder>(new DroneServicesHttpRequestBuilder());
         }
 
-        protected void UseAnalizers()
+        protected void UseAnalyzers()
         {
-            Mocker.SetConstant<IEnumerable<IAnalizeContent>>(new List<IAnalizeContent> 
+            Mocker.SetConstant<IEnumerable<IAnalyzeContent>>(new List<IAnalyzeContent> 
             { 
-                new AnalizeAudio(TestLogger), 
-                new AnalizeCodec(TestLogger),
-                new AnalizeDaily(TestLogger), 
-                new AnalizeHash(TestLogger),
-                new AnalizeLanguage(TestLogger),
-                new AnalizeResolution(TestLogger),
-                new AnalizeSeason(TestLogger),
-                new AnalizeSource(TestLogger),
-                new AnalizeSpecial(TestLogger),
-                new AnalizeYear(TestLogger),
-                new AnalizeAbsoluteEpisodeNumber(TestLogger),
-                new AnalizeFileExtension(TestLogger),
-                new AnalizeProper(TestLogger),
-                new AnalizeRawHD(TestLogger),
-                new AnalizeReal(TestLogger)
+                new AnalyzeAudio(TestLogger), 
+                new AnalyzeCodec(TestLogger),
+                new AnalyzeDaily(TestLogger), 
+                new AnalyzeHash(TestLogger),
+                new AnalyzeLanguage(TestLogger),
+                new Analyzeresolution(TestLogger),
+                new AnalyzeSeason(TestLogger),
+                new AnalyzeSource(TestLogger),
+                new AnalyzeSpecial(TestLogger),
+                new AnalyzeYear(TestLogger),
+                new AnalyzeAbsoluteEpisodeNumber(TestLogger),
+                new AnalyzeFileExtension(TestLogger),
+                new AnalyzeProper(TestLogger),
+                new AnalyzerawHD(TestLogger),
+                new Analyzereal(TestLogger)
             });
         }
     }

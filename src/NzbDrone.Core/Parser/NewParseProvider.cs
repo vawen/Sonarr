@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.MediaFiles;
-using NzbDrone.Core.Parser.Analizers;
+using NzbDrone.Core.Parser.Analyzers;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
@@ -63,7 +63,7 @@ namespace NzbDrone.Core.Parser
             }
         }
 
-        private IEnumerable<IAnalizeContent> _analizers;
+        private IEnumerable<IAnalyzeContent> _Analyzers;
         private readonly ISeriesService _seriesService;
         private readonly IEpisodeService _episodeService;
         private readonly IParsingService _parsingService;
@@ -107,14 +107,14 @@ namespace NzbDrone.Core.Parser
 
         public NewParseProvider(ISeriesService seriesService,
                                 IEpisodeService episodeService,
-                                IEnumerable<IAnalizeContent> analizers,
+                                IEnumerable<IAnalyzeContent> Analyzers,
                                 IParsingService parsingService,
                                 Logger logger)
         {
             _seriesService = seriesService;
             _episodeService = episodeService;
             _parsingService = parsingService;
-            _analizers = analizers;
+            _Analyzers = Analyzers;
             _logger = logger;
         }
 
@@ -127,8 +127,7 @@ namespace NzbDrone.Core.Parser
 
         public Language ParseLanguage(string title)
         {
-            List<ParsedItem> UnknownInfo;
-            ParsedInfo info = InternalParse(title, out UnknownInfo, null, null);
+            ParsedInfo info = InternalParse(title, null, null);
             return ParseLanguage(info);
         }
 
@@ -166,15 +165,14 @@ namespace NzbDrone.Core.Parser
 
             if (!ValidateBeforeParsing(title)) return null;
 
-            List<ParsedItem> unknownInfo;
-            var parsedInfo = InternalParse(title, out unknownInfo, null, null);
+            var parsedInfo = InternalParse(title, null, null);
 
             if (parsedInfo.IsEmpty())
             {
-                parsedInfo = InternalParse(title.NormalizeTitle(), out unknownInfo, null, null);
+                parsedInfo = InternalParse(title.NormalizeTitle(), null, null);
             }
 
-            foreach (var unk in unknownInfo)
+            foreach (var unk in parsedInfo.UnknownInfo)
             {
                 _logger.Debug("Unknown Item: {0}", unk);
             }
@@ -256,7 +254,7 @@ namespace NzbDrone.Core.Parser
 
                     if (parsedEpisodeInfo.FullSeason)
                     {
-                        foreach (var unk in unknownInfo)
+                        foreach (var unk in parsedInfo.UnknownInfo)
                         {
                             if (unk.Value.NormalizeTitle().IndexOf("subpack") >= 0)
                                 return null;
@@ -330,7 +328,7 @@ namespace NzbDrone.Core.Parser
                     pos += inner.Length;
                 }
             }
-            // Analize separators?
+            // Analyze separators?
             /*var itemsToAdd = new List<ParsedItem>();
             var itemsToRemove = new List<ParsedItem>();
             foreach (var item in ret)
@@ -355,14 +353,13 @@ namespace NzbDrone.Core.Parser
             return ret;
         }
 
-        private ParsedInfo InternalParse(string title, out List<ParsedItem> unknownItems, Series serie, string seriesTitle)
+        //private ParsedInfo InternalParse(string title, out List<ParsedItem> unknownItems, Series serie, string seriesTitle)
+        private ParsedInfo InternalParse(string title, Series serie, string seriesTitle)
         {
             var myParsedInfo = new ParsedInfo();
             myParsedInfo.Series = serie;
             myParsedInfo.SeriesTitle = seriesTitle;
 
-            // Info that we couldn't parse
-            unknownItems = new List<ParsedItem>();
             // Info that has been parsed at least once
             var parsedItems = new List<ParsedItem>();
 
@@ -388,9 +385,9 @@ namespace NzbDrone.Core.Parser
                 {
                     ParsedItem[] remains = null;
                     bool gotAnyResult = false;
-                    foreach (var analizer in _analizers)
+                    foreach (var Analyzer in _Analyzers)
                     {
-                        var gotResult = analizer.IsContent(item, myParsedInfo, out remains);
+                        var gotResult = Analyzer.IsContent(item, myParsedInfo, out remains);
                         if (gotResult)
                         {
                             if (!parsedItems.Contains(item))
@@ -405,8 +402,8 @@ namespace NzbDrone.Core.Parser
                     }
                     if (!gotAnyResult)
                     {
-                        if (!unknownItems.Contains(item))
-                            unknownItems.Add(item);
+                        if (!myParsedInfo.UnknownInfo.Contains(item))
+                            myParsedInfo.UnknownInfo.Add(item);
                     }
                 }
                 pendingItems.Clear();
@@ -446,13 +443,13 @@ namespace NzbDrone.Core.Parser
             }
 
             // Try to find the series name
-            if (!FindSeries(unknownItems, myParsedInfo))
+            if (!FindSeries(myParsedInfo.UnknownInfo, myParsedInfo))
             {
                 var titleSplit = PrepareTitle(title);
                 var titlePosition = FindSeries(titleSplit, myParsedInfo);
                 if (myParsedInfo.Series != null)
                 {
-                    unknownItems.Clear();
+                    myParsedInfo.UnknownInfo.Clear();
                     var _newTitle = "";
                     for (var i = 0; i < titleSplit.Length; i++)
                     {
@@ -461,7 +458,7 @@ namespace NzbDrone.Core.Parser
                             _newTitle = String.Format("{0} {1}", _newTitle, titleSplit[i]);
                         }
                     }
-                    return InternalParse(_newTitle.Trim(), out unknownItems, myParsedInfo.Series, myParsedInfo.SeriesTitle);
+                    return InternalParse(_newTitle.Trim(), myParsedInfo.Series, myParsedInfo.SeriesTitle);
                 }
             }
 
@@ -497,7 +494,7 @@ namespace NzbDrone.Core.Parser
                     // If myParsedInfo doesn't have this item, add to unknown items
                     if (!myParsedInfo.AnyContains(item, containers))
                     {
-                        unknownItems.Add(item);
+                        myParsedInfo.UnknownInfo.Add(item);
                     }
                 }
             }
@@ -512,10 +509,10 @@ namespace NzbDrone.Core.Parser
 
             // Clear non char unknownItems
 
-            unknownItems.RemoveAll(u => !u.Value.Any(char.IsLetterOrDigit));
+            myParsedInfo.UnknownInfo.RemoveAll(u => !u.Value.Any(char.IsLetterOrDigit));
 
             // Release group will be an Unknown item that is only one word
-            foreach (var unk in unknownItems)
+            foreach (var unk in myParsedInfo.UnknownInfo)
             {
                 var splitedUnk = SplitSeparatorsRegex.Split(unk.Value);
                 var pos = unk.Position;
@@ -544,7 +541,7 @@ namespace NzbDrone.Core.Parser
         #region Quality extraction
         private static Resolution ParseResolution(String name)
         {
-            var match = AnalizeResolution.ResolutionRegex.Match(name);
+            var match = Analyzeresolution.ResolutionRegex.Match(name);
 
             if (!match.Success) return Resolution.Unknown;
             if (match.Groups["_480p"].Success) return Resolution._480p;
@@ -562,7 +559,7 @@ namespace NzbDrone.Core.Parser
 
             foreach (var proper in parsedInfo.Proper)
             {
-                var matches = AnalizeProper.ProperRegex.Matches(proper.Value);
+                var matches = AnalyzeProper.ProperRegex.Matches(proper.Value);
                 foreach (Match match in matches)
                 {
                     if (match.Groups["proper"].Success && result.Revision.Version < 2)
@@ -602,8 +599,8 @@ namespace NzbDrone.Core.Parser
             var source = parsedInfo.Source.Any() ? parsedInfo.Source[0].Value : "";
             var codec = parsedInfo.Codec.Any() ? parsedInfo.Codec[0].Value : "";
 
-            var sourceMatch = AnalizeSource.SourceRegex.Match(source);
-            var codecMatch = AnalizeCodec.CodecRegex.Match(codec);
+            var sourceMatch = AnalyzeSource.SourceRegex.Match(source);
+            var codecMatch = AnalyzeCodec.CodecRegex.Match(codec);
             var resolution = ParseResolution(parsedInfo.Resolution.Any() ? parsedInfo.Resolution[0].Value : "");
 
             if (sourceMatch.Groups["bluray"].Success)
@@ -831,7 +828,7 @@ namespace NzbDrone.Core.Parser
 
             foreach (var item in info.Language)
             {
-                var newLang = AnalizeLanguage(item.Value);
+                var newLang = AnalyzeLanguage(item.Value);
                 if (ret == Language.Unknown)
                     ret = newLang;
                 if (newLang != ret)
@@ -847,7 +844,7 @@ namespace NzbDrone.Core.Parser
             return ret;
         }
 
-        private Language AnalizeLanguage(string item)
+        private Language AnalyzeLanguage(string item)
         {
             var lowerTitle = item.ToLower();
 
@@ -908,7 +905,7 @@ namespace NzbDrone.Core.Parser
             if (lowerTitle.Contains("hungarian"))
                 return Language.Hungarian;
 
-            var match = Analizers.AnalizeLanguage.LanguageRegex.Match(item);
+            var match = Analyzers.AnalyzeLanguage.LanguageRegex.Match(item);
 
             if (match.Groups["italian"].Captures.Cast<Capture>().Any())
                 return Language.Italian;
@@ -1139,7 +1136,7 @@ namespace NzbDrone.Core.Parser
 
             foreach (var item in parsedInfo.AbsoluteEpisodeNumber)
             {
-                var matchCollection = AnalizeAbsoluteEpisodeNumber.SimpleAbsoluteNumber.Matches(item.Value);
+                var matchCollection = AnalyzeAbsoluteEpisodeNumber.SimpleAbsoluteNumber.Matches(item.Value);
                 var absoluteEpisodes = new List<Capture>();
 
                 var listToAdd = new List<int>();
@@ -1257,9 +1254,9 @@ namespace NzbDrone.Core.Parser
                 var newYear = 0;
                 var newMonth = 0;
                 var newDay = 0;
-                var airDateMatch = AnalizeDaily.AirDateRegex.Match(newDate.Value);
-                var sixDigitAirDateMatch = AnalizeDaily.SixDigitAirDateRegex.Match(newDate.Value);
-                var sixDigitAirWDateMatch = AnalizeDaily.SixDigitWAirDateRegex.Match(newDate.Value);
+                var airDateMatch = AnalyzeDaily.AirDateRegex.Match(newDate.Value);
+                var sixDigitAirDateMatch = AnalyzeDaily.SixDigitAirDateRegex.Match(newDate.Value);
+                var sixDigitAirWDateMatch = AnalyzeDaily.SixDigitWAirDateRegex.Match(newDate.Value);
 
                 if (airDateMatch.Success)
                 {
@@ -1350,7 +1347,7 @@ namespace NzbDrone.Core.Parser
 
                     var seasons = new List<int>();
 
-                    foreach (Match match in AnalizeSeason.SeasonAndEpisodeWord.Matches(item.Value))
+                    foreach (Match match in AnalyzeSeason.SeasonAndEpisodeWord.Matches(item.Value))
                     {
                         foreach (Capture seasonCapture in match.Groups["season"].Captures)
                         {
@@ -1362,7 +1359,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!seasons.Any())
                     {
-                        foreach (Match match in AnalizeSeason.WeirdSeason.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.WeirdSeason.Matches(item.Value))
                         {
                             foreach (Capture seasonCapture in match.Groups["season"].Captures)
                             {
@@ -1375,7 +1372,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!seasons.Any())
                     {
-                        foreach (Match match in AnalizeSeason.SimpleSeason.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.SimpleSeason.Matches(item.Value))
                         {
                             foreach (Capture seasonCapture in match.Groups["season"].Captures)
                             {
@@ -1388,7 +1385,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!seasons.Any())
                     {
-                        foreach (Match match in AnalizeSeason.OnlyDigitsOrEp.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.OnlyDigitsOrEp.Matches(item.Value))
                         {
                             foreach (Capture seasonCapture in match.Groups["season"].Captures)
                             {
@@ -1401,7 +1398,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!seasons.Any())
                     {
-                        foreach (Match match in AnalizeSeason.OnlySeason.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.OnlySeason.Matches(item.Value))
                         {
                             foreach (Capture seasonCapture in match.Groups["season"].Captures)
                             {
@@ -1458,7 +1455,7 @@ namespace NzbDrone.Core.Parser
 
                     var episodes = new List<int>();
 
-                    foreach (Match match in AnalizeSeason.SeasonAndEpisodeWord.Matches(item.Value))
+                    foreach (Match match in AnalyzeSeason.SeasonAndEpisodeWord.Matches(item.Value))
                     {
                         var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
                         // If more than 2 then all episodes should be consecutives
@@ -1488,7 +1485,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!episodes.Any())
                     {
-                        foreach (Match match in AnalizeSeason.WeirdSeason.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.WeirdSeason.Matches(item.Value))
                         {
                             var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
                             // If more than 2 then all episodes should be consecutives
@@ -1529,7 +1526,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!episodes.Any())
                     {
-                        foreach (Match match in AnalizeSeason.SimpleSeason.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.SimpleSeason.Matches(item.Value))
                         {
                             var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
                             // If more than 2 then all episodes should be consecutives
@@ -1569,7 +1566,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!episodes.Any())
                     {
-                        foreach (Match match in AnalizeSeason.OnlyDigitsOrEp.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.OnlyDigitsOrEp.Matches(item.Value))
                         {
                             var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
                             // If more than 2 then all episodes should be consecutives
@@ -1601,7 +1598,7 @@ namespace NzbDrone.Core.Parser
                     // Miniseries
                     if (!episodes.Any() && seasonAndEpisode.isMiniOrSpecial)
                     {
-                        foreach (Match match in AnalizeSeason.SimpleMiniSerie.Matches(item.Value))
+                        foreach (Match match in AnalyzeSeason.SimpleMiniSerie.Matches(item.Value))
                         {
                             var episodeCaptures = match.Groups["episode"].Captures.Cast<Capture>().ToList();
                             // If more than 2 then all episodes should be consecutives

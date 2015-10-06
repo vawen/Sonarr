@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeResolution : AnalizeContent
+    public class Analyzeresolution : AnalyzeContent
     {
         private readonly Logger _logger;
 
@@ -11,7 +11,7 @@ namespace NzbDrone.Core.Parser.Analizers
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 
-        public AnalizeResolution(Logger logger)
+        public Analyzeresolution(Logger logger)
             : base(ResolutionRegex)
         {
             _logger = logger;

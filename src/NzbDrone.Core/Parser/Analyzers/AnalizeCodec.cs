@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeCodec : AnalizeContent
+    public class AnalyzeCodec : AnalyzeContent
     {
 
         private readonly Logger _logger;
@@ -11,7 +11,7 @@ namespace NzbDrone.Core.Parser.Analizers
         public static readonly Regex CodecRegex = new Regex(@"(\b|_)?(?:(?<x264>x264)|(?<h264>h(\.|\s)?264)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))(\b|_)?",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
-        public AnalizeCodec(Logger logger)
+        public AnalyzeCodec(Logger logger)
             : base(CodecRegex)
         {
             _logger = logger;

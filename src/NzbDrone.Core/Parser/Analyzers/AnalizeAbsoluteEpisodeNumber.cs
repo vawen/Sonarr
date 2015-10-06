@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeAbsoluteEpisodeNumber : AnalizeContent
+    public class AnalyzeAbsoluteEpisodeNumber : AnalyzeContent
     {
         private readonly Logger _logger;
 
@@ -11,7 +11,7 @@ namespace NzbDrone.Core.Parser.Analizers
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 
-        public AnalizeAbsoluteEpisodeNumber(Logger logger)
+        public AnalyzeAbsoluteEpisodeNumber(Logger logger)
             : base(new Regex[] {
                 new Regex(@"(?:\b|[-_])(?<!\d[-_.])(?:(e|ep)?\d{2,3}(?:[-._\s]?))+(?:v\d{1})?(?<!\d{4}[-._\s])(?<!\d{4})(?:\b|_|\b)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)

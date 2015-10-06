@@ -17,7 +17,7 @@ namespace NzbDrone.Core.Test.ParserTests.Parser
         [SetUp]
         public void Setup()
         {
-            UseAnalizers();
+            UseAnalyzers();
         }
 
         [TestCase("Castle.2009.S01E14.English.HDTV.XviD-LOL", Language.English, "Castle 2009")]

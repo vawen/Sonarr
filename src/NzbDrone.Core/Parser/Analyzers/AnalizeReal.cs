@@ -1,15 +1,15 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeYear : AnalizeContent
+    public class Analyzereal : AnalyzeContent
     {
         private readonly Logger _logger;
 
-        public AnalizeYear(Logger logger)
-            : base(new Regex(@"(\b|_)(?:[12][09]\d{2})(\b|_)",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
+        public Analyzereal(Logger logger)
+            : base(new Regex(@"(\b|_)(?<real>real)(\b|_)",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase))
         {
             _logger = logger;
         }
@@ -22,8 +22,8 @@ namespace NzbDrone.Core.Parser.Analizers
             {
                 foreach (var param in parsedItems)
                 {
-                    _logger.Debug("Detected Year: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Year);
+                    _logger.Debug("Detected Real: {0}", param);
+                    ParsedInfo.AddItem(param, parsedInfo.Real);
                 }
             }
             return ret;

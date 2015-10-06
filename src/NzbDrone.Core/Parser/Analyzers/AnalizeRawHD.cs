@@ -1,15 +1,15 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeSpecial : AnalizeContent
+    public class AnalyzerawHD : AnalyzeContent
     {
         private readonly Logger _logger;
 
-        public AnalizeSpecial(Logger logger)
-            : base(new Regex(@"(\b|_)(?:special|ova|ovd)(\b|_)",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase))
+        public AnalyzerawHD(Logger logger)
+            : base(new Regex(@"(\b|_)(?<rawhd>TrollHD|RawHD|1080i[-_. ]HDTV|Raw[-_. ]HD|MPEG[-_. ]?2)(\b|_)",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
         {
             _logger = logger;
         }
@@ -22,8 +22,8 @@ namespace NzbDrone.Core.Parser.Analizers
             {
                 foreach (var param in parsedItems)
                 {
-                    _logger.Debug("Detected Special: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Special);
+                    _logger.Debug("Detected RawHD: {0}", param);
+                    ParsedInfo.AddItem(param, parsedInfo.RawHD);
                 }
             }
             return ret;

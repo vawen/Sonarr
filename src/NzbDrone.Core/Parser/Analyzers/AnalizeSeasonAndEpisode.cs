@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeSeason : AnalizeContent
+    public class AnalyzeSeason : AnalyzeContent
     {
         private readonly Logger _logger;
 
@@ -35,7 +35,7 @@ namespace NzbDrone.Core.Parser.Analizers
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
 
-        public AnalizeSeason(Logger logger)
+        public AnalyzeSeason(Logger logger)
             : base(new Regex[] {
                 new Regex(@"(\b|_)(?:\W?Season\W?)(?:(?<!\d)\d{1,2}(?!\d+))(?:\W|_)+(?:Episode\W)(?:[-_. ]?(?:(?<!\d)\d{1,2}(?!\d+)))+(\b|_)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace),

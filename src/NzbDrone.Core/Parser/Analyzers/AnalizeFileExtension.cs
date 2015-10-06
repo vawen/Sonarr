@@ -1,14 +1,14 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeFileExtension : AnalizeContent
+    public class AnalyzeFileExtension : AnalyzeContent
     {
 
         private readonly Logger _logger;
 
-        public AnalizeFileExtension(Logger logger)
+        public AnalyzeFileExtension(Logger logger)
             : base(new Regex(@"\.[a-z0-9]{2,4}$",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase))
         {

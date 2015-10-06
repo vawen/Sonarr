@@ -1,13 +1,13 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeAudio : AnalizeContent
+    public class AnalyzeAudio : AnalyzeContent
     {
         private readonly Logger _logger;
 
-        public AnalizeAudio(Logger logger)
+        public AnalyzeAudio(Logger logger)
             : base(new Regex(@"(\b|_)(?:(?<dts>DTS(?:-HD)?\W?(?:MA)?\W?(?:(?:5|7)\W1)?)|(?<dd51>DD\W?(?:5|7)\W1)|(?<AAC>(?:\d{0,2}bit\W?)?AAC\d{0,1}(\.\d)?))(\b|_)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
         {

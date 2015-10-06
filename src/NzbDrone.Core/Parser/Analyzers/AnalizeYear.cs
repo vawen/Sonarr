@@ -1,17 +1,15 @@
 ﻿using System.Text.RegularExpressions;
 using NLog;
 
-namespace NzbDrone.Core.Parser.Analizers
+namespace NzbDrone.Core.Parser.Analyzers
 {
-    public class AnalizeProper : AnalizeContent
+    public class AnalyzeYear : AnalyzeContent
     {
         private readonly Logger _logger;
 
-        public static readonly Regex ProperRegex = new Regex(@"(\dv(?<version>\d)|(\b|_)v(?<version>\d)|(\b|_)(?<proper>proper|repack))(\b|_)",
-                   RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
-
-        public AnalizeProper(Logger logger)
-            : base(ProperRegex)
+        public AnalyzeYear(Logger logger)
+            : base(new Regex(@"(\b|_)(?:[12][09]\d{2})(\b|_)",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
         {
             _logger = logger;
         }
@@ -24,8 +22,8 @@ namespace NzbDrone.Core.Parser.Analizers
             {
                 foreach (var param in parsedItems)
                 {
-                    _logger.Debug("Detected Proper: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Proper);
+                    _logger.Debug("Detected Year: {0}", param);
+                    ParsedInfo.AddItem(param, parsedInfo.Year);
                 }
             }
             return ret;
