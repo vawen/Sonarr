@@ -23,7 +23,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Special: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Special);
+                    param.Category = InfoCategory.Special;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

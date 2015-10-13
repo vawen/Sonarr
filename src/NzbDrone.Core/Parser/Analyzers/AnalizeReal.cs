@@ -23,7 +23,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Real: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Real);
+                    param.Category = InfoCategory.Real;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

@@ -26,7 +26,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Resolution: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Resolution);
+                    param.Category = InfoCategory.Resolution;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

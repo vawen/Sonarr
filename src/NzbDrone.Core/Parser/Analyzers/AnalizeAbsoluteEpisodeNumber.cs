@@ -12,7 +12,7 @@ namespace NzbDrone.Core.Parser.Analyzers
 
 
         public AnalyzeAbsoluteEpisodeNumber(Logger logger)
-            : base(new Regex[] {
+            : base(new[] {
                 new Regex(@"(?:\b|[-_])(?<!\d[-_.])(?:(e|ep)?\d{2,3}(?:[-._\s]?))+(?:v\d{1})?(?<!\d{4}[-._\s])(?<!\d{4})(?:\b|_|\b)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace)
             })
@@ -23,16 +23,18 @@ namespace NzbDrone.Core.Parser.Analyzers
         public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
         {
             ParsedItem[] parsedItems;
-            bool ret = IsContent(item, out parsedItems, out notParsed);
-            if (ret)
+            var ret = IsContent(item, out parsedItems, out notParsed);
+            if (!ret)
             {
-                foreach (var param in parsedItems)
-                {
-                    _logger.Debug("Detected Absolute: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.AbsoluteEpisodeNumber);
-                }
+                return false;
             }
-            return ret;
+            foreach (var param in parsedItems)
+            {
+                _logger.Debug("Detected Absolute: {0}", param);
+                param.Category = InfoCategory.AbsoluteEpisodeNumber;
+                parsedInfo.AddItem(param);
+            }
+            return true;
         }
     }
 }

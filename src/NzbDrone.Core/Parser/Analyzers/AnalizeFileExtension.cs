@@ -30,7 +30,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected FileExtension: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.FileExtension);
+                    param.Category = InfoCategory.FileExtension;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

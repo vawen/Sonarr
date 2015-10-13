@@ -23,7 +23,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Year: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Year);
+                    param.Category = InfoCategory.Year;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

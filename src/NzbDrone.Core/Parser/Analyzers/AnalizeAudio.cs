@@ -17,16 +17,19 @@ namespace NzbDrone.Core.Parser.Analyzers
         public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
         {
             ParsedItem[] parsedItems;
-            bool ret = IsContent(item, out parsedItems, out notParsed);
-            if (ret)
+            var ret = IsContent(item, out parsedItems, out notParsed);
+            if (!ret)
             {
-                foreach (var param in parsedItems)
-                {
-                    _logger.Debug("Detected Audio: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Audio);
-                }
+                return false;
             }
-            return ret;
+
+            foreach (var param in parsedItems)
+            {
+                _logger.Debug("Detected Audio: {0}", param);
+                param.Category = InfoCategory.Audio;
+                parsedInfo.AddItem(param);
+            }
+            return true;
         }
     }
 }

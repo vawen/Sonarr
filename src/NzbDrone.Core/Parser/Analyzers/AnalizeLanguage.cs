@@ -32,7 +32,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Language: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Language);
+                    param.Category = InfoCategory.Language;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

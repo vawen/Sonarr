@@ -65,7 +65,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Season: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Season);
+                    param.Category = InfoCategory.Season;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

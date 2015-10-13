@@ -46,6 +46,10 @@ namespace NzbDrone.Core.Test.ParserTests.NewParser
                 .Setup(p => p.GetEpisodesBySeason(It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(episodes);
 
+            Mocker.GetMock<IEpisodeService>()
+                .Setup(p => p.FindEpisode(It.IsAny<int>(), It.IsAny<int>()))
+                .Returns(episodes.First());
+
             var _title = title.NormalizeTitle();
             Mocker.GetMock<ISeriesService>()
                 .Setup(p => p.FindByTitle(It.Is<string>(s => s.Equals(_title))))

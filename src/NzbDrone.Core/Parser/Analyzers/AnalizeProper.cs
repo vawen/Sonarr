@@ -25,7 +25,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Proper: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Proper);
+                    param.Category = InfoCategory.Proper;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

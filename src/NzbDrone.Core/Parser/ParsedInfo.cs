@@ -2,15 +2,34 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FluentValidation.Results;
 using NLog;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Parser
 {
-    public enum InfoCategories
+    [Flags]
+    public enum InfoCategory
     {
-        Title = 1,
-        Source
+        Unknown = 0,
+        Title = 0x00001,
+        Source = 0x00002,
+        Resolution = 0x00004,
+        Audio = 0x00008,
+        Season = 0x00010,
+        Codec = 0x00020,
+        Hash = 0x00040,
+        Language = 0x00080,
+        ReleaseGroup = 0x00100,
+        Daily = 0x00200,
+        Special = 0x00400,
+        Year = 0x00800,
+        AbsoluteEpisodeNumber = 0x01000,
+        FileExtension = 0x02000,
+        Proper = 0x04000,
+        RawHD = 0x08000,
+        Real = 0x010000,
+        All = 0xFFFFF
     }
 
     public class ParsedItem
@@ -19,13 +38,9 @@ namespace NzbDrone.Core.Parser
         public int Position { get; set; }
         public int Length { get; set; }
         public int GlobalLength { get; set; }
-        public int End
-        {
-            get
-            {
-                return Position + Length - 1;
-            }
-        }
+        public int End => Position + Length - 1;
+
+        public InfoCategory Category { get; set; } 
 
         public override string ToString()
         {
@@ -38,7 +53,7 @@ namespace NzbDrone.Core.Parser
             return (Position <= other.Position && End >= other.End);
         }
 
-        public void Trim()
+        public ParsedItem Trim()
         {
             var valArray = Value.ToArray();
             var newPos = Position;
@@ -49,10 +64,18 @@ namespace NzbDrone.Core.Parser
                 else
                     break;
             }
+            var newValue = Value.Trim();
+            var newCategory = Category;
+            var newGlobalLength = GlobalLength;
 
-            Position = newPos;
-            Value = Value.Trim();
-            Length = Value.Length;
+            return new ParsedItem
+            {
+                Position = newPos,
+                Value = newValue,
+                Category = newCategory,
+                Length = Value.Trim().Length,
+                GlobalLength = newGlobalLength
+            };
         }
 
         public ParsedItem[] Split(ParsedItem item)
@@ -67,13 +90,15 @@ namespace NzbDrone.Core.Parser
                 var newPosition = Position + item.Length;
                 var newLength = Length - item.Length;
                 var newValue = Value.Substring(item.Length);
+                var newCategory = item.Category;
                 var newGlobalLength = GlobalLength;
                 ret.Add(new ParsedItem
                 {
                     Position = newPosition,
                     Length = newLength,
                     Value = newValue,
-                    GlobalLength = newGlobalLength
+                    GlobalLength = newGlobalLength,
+                    Category = newCategory
                 });
             }
             else
@@ -82,26 +107,28 @@ namespace NzbDrone.Core.Parser
                 var newLength = item.Position - Position;
                 var newValue = Value.Substring(0, item.Position - Position);
                 var newGlobalLength = GlobalLength;
-
+                var newCategory = item.Category;
                 ret.Add(new ParsedItem
                 {
                     Position = newPosition,
                     Length = newLength,
                     Value = newValue,
-                    GlobalLength = newGlobalLength
+                    GlobalLength = newGlobalLength,
+                    Category = newCategory
                 });
 
                 newPosition = item.Position + item.Length;
                 newValue = Value.Substring(newPosition - Position);
                 newLength = newValue.Length;
                 newGlobalLength = GlobalLength;
-
+                newCategory = item.Category;
                 ret.Add(new ParsedItem
                 {
                     Position = newPosition,
                     Length = newLength,
                     Value = newValue,
-                    GlobalLength = newGlobalLength
+                    GlobalLength = newGlobalLength,
+                    Category =  newCategory
                 });
             }
             return ret.ToArray();
@@ -109,7 +136,7 @@ namespace NzbDrone.Core.Parser
 
         public override int GetHashCode()
         {
-            int result = 0;
+            var result = 0;
             if (Value != null)
             {
                 result ^= Value.GetHashCode();
@@ -123,10 +150,7 @@ namespace NzbDrone.Core.Parser
 
         public bool Equals(ParsedItem other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-
-            return other.Position.Equals(Position) && other.Length.Equals(Length);
+            return EqualsIgnoreCategory(other) && ((other.Category & Category) == other.Category);
         }
 
         public override bool Equals(object other)
@@ -144,107 +168,114 @@ namespace NzbDrone.Core.Parser
             return mine.Any(p => theOther.Contains(p));
         }
 
+        public bool EqualsIgnoreCategory(ParsedItem other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return other.Position.Equals(Position) &&
+                   other.Length.Equals(Length);
+        }
     }
 
     public class ParsedInfo
     {
         public Series Series { get; set; }
         public string SeriesTitle { get; set; }
-        public List<ParsedItem> Title { get; set; }
-        public List<ParsedItem> Source { get; set; }
-        public List<ParsedItem> Resolution { get; set; }
-        public List<ParsedItem> Audio { get; set; }
-        public List<ParsedItem> Season { get; set; }
-        public List<ParsedItem> Codec { get; set; }
-        public List<ParsedItem> Hash { get; set; }
-        public List<ParsedItem> Language { get; set; }
-        public List<ParsedItem> ReleaseGroup { get; set; }
-        public List<ParsedItem> Daily { get; set; }
-        public List<ParsedItem> Special { get; set; }
-        public List<ParsedItem> Year { get; set; }
-        public List<ParsedItem> AbsoluteEpisodeNumber { get; set; }
-        public List<ParsedItem> FileExtension { get; set; }
-        public List<ParsedItem> Proper { get; set; }
-        public List<ParsedItem> RawHD { get; set; }
-        public List<ParsedItem> Real { get; set; }
-        public List<ParsedItem> UnknownInfo { get; set; }
         public bool AbsoluteNumering { get; set; }
+        private List<ParsedItem> ItemList { get; } 
 
-        public void PrintMap(Logger log)
+        public List<ParsedItem> GetItemsInCategory(InfoCategory flags, Func<ParsedItem,bool> predicate = null)
         {
+            IEnumerable<ParsedItem> ret;
+            if (flags == InfoCategory.Unknown)
+            {
+                ret = ItemList.Where(p => p.Category == InfoCategory.Unknown);
+            }
+            else
+            {
+                ret = ItemList.Where(p => (p.Category & flags) > 0);
+            }
+            if (predicate == null)
+            {
+                return ret.ToList();
+            }
 
+            return ret.Where(predicate).ToList();
         }
 
         public bool IsEmpty()
         {
             if (Series != null) return false;
-            if (Title.Count > 0) return false;
-            if (Source.Count > 0) return false;
-            if (Resolution.Count > 0) return false;
-            if (Audio.Count > 0) return false;
-            if (Season.Count > 0) return false;
-            if (AbsoluteEpisodeNumber.Count > 0) return false;
-            if (Language.Count > 0) return false;
-            if (Daily.Count > 0) return false;
-            if (Special.Count > 0) return false;
-            if (Year.Count > 0) return false;
+
+            if (ItemList.Any(i => (i.Category & InfoCategory.Title) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Source) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Resolution) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Audio) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Season) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.AbsoluteEpisodeNumber) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Language) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Daily) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Special) > 0)) return false;
+            if (ItemList.Any(i => (i.Category & InfoCategory.Year) > 0)) return false;
             return true;
         }
 
-        public static bool AddItem(ParsedItem newItem, List<ParsedItem> Container)
+        public bool AddItem(ParsedItem newItem)
         {
-            if (Container.Contains(newItem))
-                return false;
-
-            var itemsToRemove = new List<ParsedItem>();
-
-            //If item inside already contains the item to add, don't do it           
-            /*if (Container.Any(p => p.Contains(newItem)))
-                return false;*/
-            foreach (var item in Container.Where(p => p.Intersect(newItem)))
+            // Items are exacts, this includes category
+            if (ItemList.Contains(newItem))
             {
-                string res = item.Value.Replace(newItem.Value, String.Empty);
-                if (res.Length == 0 || !res.Any(char.IsLetterOrDigit))
-                {
-                    //New item is better
-                    Container.Remove(item);
-                    break;
-                }
-                res = newItem.Value.Replace(item.Value, String.Empty);
-                if (res.Length == 0 || !res.Any(char.IsLetterOrDigit))
-                {
-                    return false;
-                }
-
+                return false;
             }
 
-            Container.Add(newItem);
+            try
+            {
+                // Items are the same but parse for 2 categories (or unknown is in the list)
+                var i = ItemList.Single(p => p.EqualsIgnoreCategory(newItem));
+                if (i != null)
+                {
+                    ItemList.Remove(i);
+                    i.Category = i.Category | newItem.Category;
+                    ItemList.Add(i.Trim());
+                    return true;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+            }
+
+            // Intersection and same group of categories
+            foreach (var item in ItemList.Where(p => p.Intersect(newItem) && p.Category  == newItem.Category))
+            {
+                var res = item.Value.Replace(newItem.Value, String.Empty);
+                
+                // The current item is the same as the new one, excluding trailing and separators
+                if (res.Length == 0 || !res.Any(char.IsLetterOrDigit))
+                {
+                    // Keep the smaller one
+                    if (item.Trim().Length <= newItem.Trim().Length)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            ItemList.Add(newItem.Trim());
             return true;
         }
 
         public ParsedInfo()
         {
-            Title = new List<ParsedItem>();
-            Source = new List<ParsedItem>();
-            Resolution = new List<ParsedItem>();
-            Audio = new List<ParsedItem>();
-            Season = new List<ParsedItem>();
-            Codec = new List<ParsedItem>();
-            Hash = new List<ParsedItem>();
-            Language = new List<ParsedItem>();
-            ReleaseGroup = new List<ParsedItem>();
-            Daily = new List<ParsedItem>();
-            Special = new List<ParsedItem>();
-            Year = new List<ParsedItem>();
-            AbsoluteEpisodeNumber = new List<ParsedItem>();
-            FileExtension = new List<ParsedItem>();
-            Proper = new List<ParsedItem>();
-            RawHD = new List<ParsedItem>();
-            Real = new List<ParsedItem>();
-            UnknownInfo = new List<ParsedItem>();
+            ItemList = new List<ParsedItem>();
         }
 
-        public void RemoveFromAll(ParsedItem item)
+        public int RemoveAll(System.Predicate<ParsedItem> predicate)
+        {
+            return ItemList.RemoveAll(predicate);
+        }
+
+/*        public void RemoveFromAll(ParsedItem item)
         {
             Title.Remove(item);
             Source.Remove(item);
@@ -323,6 +354,6 @@ namespace NzbDrone.Core.Parser
             if (!containers.Contains(FileExtension) && Real.Contains(item))
                 return true;
             return false;
-        }
+        }*/
     }
 }

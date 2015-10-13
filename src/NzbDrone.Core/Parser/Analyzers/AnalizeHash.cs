@@ -25,7 +25,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Hash: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Hash);
+                    param.Category = InfoCategory.Hash;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

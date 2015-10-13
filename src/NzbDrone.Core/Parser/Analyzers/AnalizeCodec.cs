@@ -26,7 +26,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected Codec: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.Codec);
+                    param.Category = InfoCategory.Codec;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;

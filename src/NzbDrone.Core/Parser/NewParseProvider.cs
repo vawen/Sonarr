@@ -18,16 +18,16 @@ namespace NzbDrone.Core.Parser
     {
         private class SeasonAndEpisode
         {
-            public Nullable<int> Season { get; set; }
-            public bool isMiniOrSpecial { get; set; }
-            public List<int> Episodes { get; set; }
-            public bool FullSeason { get; set; }
-            public ParsedItem Item { get; set; }
+            public Nullable<int> Season { get; }
+            public bool IsMiniOrSpecial { get; }
+            public List<int> Episodes { get; }
+            public bool FullSeason { get; }
+            public ParsedItem Item { get; }
 
             public SeasonAndEpisode()
             {
                 Episodes = new List<int>();
-                isMiniOrSpecial = false;
+                IsMiniOrSpecial = false;
                 FullSeason = false;
             }
 
@@ -51,11 +51,10 @@ namespace NzbDrone.Core.Parser
 
             public override int GetHashCode()
             {
-                int result = 0;
+                var result = 0;
                 if (Season.HasValue) result ^= Season.GetHashCode();
-                result ^= isMiniOrSpecial.GetHashCode();
-                for (int i = 0; i < Episodes.Count; i++)
-                    result ^= Episodes[i].GetHashCode();
+                result ^= IsMiniOrSpecial.GetHashCode();
+                result = Episodes.Aggregate(result, (current, t) => current ^ t.GetHashCode());
                 result ^= FullSeason.GetHashCode();
                 result ^= Item.GetHashCode();
 
@@ -63,17 +62,16 @@ namespace NzbDrone.Core.Parser
             }
         }
 
-        private IEnumerable<IAnalyzeContent> _Analyzers;
+        private readonly IEnumerable<IAnalyzeContent> _analyzers;
         private readonly ISeriesService _seriesService;
         private readonly IEpisodeService _episodeService;
-        private readonly IParsingService _parsingService;
         private readonly Logger _logger;
 
         private static readonly Regex ReversedTitleRegex = new Regex(@"[-._ ](p027|p0801|\d{2}E\d{2}S)[-._ ]", RegexOptions.Compiled);
         private static readonly Regex SplitClaspRegex = new Regex(@"(?:\[(?<data>.+?)\])", RegexOptions.Compiled);
         private static readonly Regex SplitSeparatorsRegex = new Regex(@"(?:[._\s])", RegexOptions.Compiled);
         private static readonly Regex SplitParenthesisRegex = new Regex(@"(?:\((?<data>.+?)\))", RegexOptions.Compiled);
-        private static readonly Regex SplitHumanReadableRegex = new Regex(@"(?:(\s[-._]\s)|(_[-.]_))", RegexOptions.Compiled);
+        //private static readonly Regex SplitHumanReadableRegex = new Regex(@"(?:(\s[-._]\s)|(_[-.]_))", RegexOptions.Compiled);
         private static readonly Regex ReleaseGroup = new Regex(@"^\W*(\w{2,}-)?(?<ReleaseGroup>(\w|-){3,})\W*$", RegexOptions.Compiled);
 
         private static readonly Regex HighDefPdtvRegex = new Regex(@"hr[-_. ]ws", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -107,14 +105,12 @@ namespace NzbDrone.Core.Parser
 
         public NewParseProvider(ISeriesService seriesService,
                                 IEpisodeService episodeService,
-                                IEnumerable<IAnalyzeContent> Analyzers,
-                                IParsingService parsingService,
+                                IEnumerable<IAnalyzeContent> analyzers,
                                 Logger logger)
         {
             _seriesService = seriesService;
             _episodeService = episodeService;
-            _parsingService = parsingService;
-            _Analyzers = Analyzers;
+            _analyzers = analyzers;
             _logger = logger;
         }
 
@@ -127,7 +123,7 @@ namespace NzbDrone.Core.Parser
 
         public Language ParseLanguage(string title)
         {
-            ParsedInfo info = InternalParse(title, null, null);
+            var info = InternalParse(title, null, null);
             return ParseLanguage(info);
         }
 
@@ -172,33 +168,34 @@ namespace NzbDrone.Core.Parser
                 parsedInfo = InternalParse(title.NormalizeTitle(), null, null);
             }
 
-            foreach (var unk in parsedInfo.UnknownInfo)
+            foreach (var unk in parsedInfo.GetItemsInCategory(InfoCategory.Unknown))
             {
                 _logger.Debug("Unknown Item: {0}", unk);
             }
 
             if (parsedInfo.IsEmpty()) return null;
 
-            ParsedEpisodeInfo parsedEpisodeInfo = new ParsedEpisodeInfo();
+            var parsedEpisodeInfo = new ParsedEpisodeInfo();
 
             // Hash
-            if (parsedInfo.Hash.Count > 0)
+            if (parsedInfo.GetItemsInCategory(InfoCategory.Hash).Any())
             {
-                parsedEpisodeInfo.ReleaseHash = parsedInfo.Hash[0].Value;
+                parsedEpisodeInfo.ReleaseHash = parsedInfo.GetItemsInCategory(InfoCategory.Hash).First().Value;
             }
 
             // ReleaseGroup
-            if (parsedInfo.ReleaseGroup.Count > 0)
+            if (parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).Any())
             {
                 // If group start with - probably it is this one
-                var item = parsedInfo.ReleaseGroup.Where(p => p.Value.Trim().StartsWith("-"));
-                if (item.Any())
+                var possibleGroups = parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup, p => p.Value.Trim().StartsWith("-"));
+                if (possibleGroups.Any())
                 {
-                    parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(item.First().Value.Trim()).Groups["ReleaseGroup"].Value;
+                    var item = possibleGroups.First();
+                    parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(item.Value).Groups["ReleaseGroup"].Value;
                 }
                 else
                 {
-                    parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(parsedInfo.ReleaseGroup.First().Value.Trim()).Groups["ReleaseGroup"].Value;
+                    parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).First().Value).Groups["ReleaseGroup"].Value;
                 }
             }
 
@@ -206,7 +203,7 @@ namespace NzbDrone.Core.Parser
             parsedEpisodeInfo.Language = ParseLanguage(parsedInfo);
 
             // Special
-            parsedEpisodeInfo.Special = parsedInfo.Special.Any();
+            parsedEpisodeInfo.Special = parsedInfo.GetItemsInCategory(InfoCategory.Special).Any();
 
             // Series Title
             parsedEpisodeInfo.SeriesTitle = parsedInfo.Series == null ? "" : parsedInfo.Series.Title;
@@ -223,20 +220,25 @@ namespace NzbDrone.Core.Parser
             // Absolute episode
             if (parsedInfo.Series == null || parsedInfo.Series.SeriesType == SeriesTypes.Anime)
             {
-                if (parsedInfo.AbsoluteEpisodeNumber.Count > 0)
+                var posibleAbsEpNumbers = parsedInfo.GetItemsInCategory(InfoCategory.AbsoluteEpisodeNumber);
+                if (posibleAbsEpNumbers.Any())
                 {
                     // Remove subsets
-                    var subset = parsedInfo.AbsoluteEpisodeNumber.Where(s => parsedInfo.AbsoluteEpisodeNumber.Any(k => !k.Equals(s) && k.Contains(s))).ToList();
-                    parsedInfo.AbsoluteEpisodeNumber.RemoveAll(s => parsedInfo.AbsoluteEpisodeNumber.Any(k => !k.Equals(s) && k.Contains(s)));
+                    var subset = posibleAbsEpNumbers.Where(s => posibleAbsEpNumbers.Any(k => !k.Equals(s) && k.Contains(s))).ToList();
+                    var removed = parsedInfo.RemoveAll(s => (s.Category & InfoCategory.AbsoluteEpisodeNumber) == InfoCategory.AbsoluteEpisodeNumber && posibleAbsEpNumbers.Any(k => !k.Equals(s) && k.Contains(s)));
 
-                    if (!ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo))
+                    if (!ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo) && removed > 0)
                     {
-                        parsedInfo.AbsoluteEpisodeNumber = subset;
+                        posibleAbsEpNumbers.ForEach(s => s.Category = (InfoCategory.All ^ InfoCategory.AbsoluteEpisodeNumber) & s.Category );
+                        //TODO THIS NEED TO BE REDONE!
+                        //parsedInfo.AbsoluteEpisodeNumber = subset;
                         ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo);
                     }
                 }
             }
 
+            //TODO UNCOMENT ALL THIS LATER
+            /*
             // Season and Episode
             if (parsedInfo.Series == null || parsedInfo.Series.SeriesType == SeriesTypes.Anime || parsedInfo.Series.SeriesType == SeriesTypes.Standard)
             {
@@ -263,7 +265,7 @@ namespace NzbDrone.Core.Parser
                         }
                     }
                 }
-            }
+            }*/
 
             // Quality
             parsedEpisodeInfo.Quality = ExtractQuality(title, parsedInfo);
@@ -322,7 +324,7 @@ namespace NzbDrone.Core.Parser
                 {
                     if (inner.Any(char.IsLetterOrDigit))
                     {
-                        var parsedItem = new ParsedItem { Value = inner.Trim(), Length = inner.Length, Position = pos };
+                        var parsedItem = new ParsedItem { Value = inner.Trim(), Length = inner.Length, Position = pos, Category =  InfoCategory.Unknown};
                         ret.Add(parsedItem);
                     }
                     pos += inner.Length;
@@ -383,28 +385,25 @@ namespace NzbDrone.Core.Parser
                 newPendingItems.Clear();
                 foreach (var item in pendingItems)
                 {
-                    ParsedItem[] remains = null;
-                    bool gotAnyResult = false;
-                    foreach (var Analyzer in _Analyzers)
+                    var gotAnyResult = false;
+                    foreach (var analyzer in _analyzers)
                     {
-                        var gotResult = Analyzer.IsContent(item, myParsedInfo, out remains);
+                        ParsedItem[] remains;
+                        var gotResult = analyzer.IsContent(item, myParsedInfo, out remains);
                         if (gotResult)
                         {
                             if (!parsedItems.Contains(item))
                                 parsedItems.Add(item);
-                            foreach (var remainItem in remains)
-                            {
-                                if (remainItem.Length > 0)
-                                    newPendingItems.Add(remainItem);
-                            }
+                            newPendingItems.AddRange(remains.Where(remainItem => remainItem.Length > 0));
                         }
                         gotAnyResult |= gotResult;
                     }
-                    if (!gotAnyResult)
+                    if (gotAnyResult || myParsedInfo.GetItemsInCategory(InfoCategory.Unknown).Contains(item))
                     {
-                        if (!myParsedInfo.UnknownInfo.Contains(item))
-                            myParsedInfo.UnknownInfo.Add(item);
+                        continue;
                     }
+                    item.Category = InfoCategory.Unknown;
+                    myParsedInfo.AddItem(item);
                 }
                 pendingItems.Clear();
                 //TODO: This doesn't cut it
@@ -419,7 +418,7 @@ namespace NzbDrone.Core.Parser
             } while (newPendingItems.Any());
 
             // Removes ResolutionInfo from Season and Hash
-            foreach (var resolution in myParsedInfo.Resolution)
+            /*foreach (var resolution in myParsedInfo.Resolution)
             {
                 // If Season Contains the Resolution item, remove it from season
                 myParsedInfo.Season.RemoveAll(season => season.Contains(resolution));
@@ -429,90 +428,79 @@ namespace NzbDrone.Core.Parser
 
                 // If Hash Contains the Resolution string and there is no more useful chars, remove it from hash
                 myParsedInfo.Hash.RemoveAll(hash => resolution.Length == 8 && hash.Contains(resolution));
-            }
+            }*/
+
+            // If an item is season or hash and resolution, set is as resolution only
+            var flags = InfoCategory.All ^ InfoCategory.Season ^ InfoCategory.Hash;
+            myParsedInfo.GetItemsInCategory(InfoCategory.Resolution).ForEach(item => item.Category&=flags);
 
             // If codec match as absoluteepisodenumber or season, remove it
 
-            foreach (var codec in myParsedInfo.Codec)
+            flags = InfoCategory.All ^ InfoCategory.Season ^ InfoCategory.AbsoluteEpisodeNumber;
+            myParsedInfo.GetItemsInCategory(InfoCategory.Codec).ForEach(item => item.Category &= flags);
+
+            /*foreach (var codec in myParsedInfo.Codec)
             {
                 myParsedInfo.Season.RemoveAll(season => season.Contains(codec));
                 myParsedInfo.Season.RemoveAll(season => codec.Contains(season));
 
                 myParsedInfo.AbsoluteEpisodeNumber.RemoveAll(ep => ep.Contains(codec));
                 myParsedInfo.AbsoluteEpisodeNumber.RemoveAll(ep => codec.Contains(ep));
-            }
+            }*/
 
             // Try to find the series name
-            if (!FindSeries(myParsedInfo.UnknownInfo, myParsedInfo))
+            if (!FindSeries(myParsedInfo))
             {
                 var titleSplit = PrepareTitle(title);
                 var titlePosition = FindSeries(titleSplit, myParsedInfo);
                 if (myParsedInfo.Series != null)
                 {
-                    myParsedInfo.UnknownInfo.Clear();
-                    var _newTitle = "";
+                    var newTitle = "";
                     for (var i = 0; i < titleSplit.Length; i++)
                     {
                         if (!titlePosition.Contains(i))
                         {
-                            _newTitle = String.Format("{0} {1}", _newTitle, titleSplit[i]);
+                            newTitle = String.Format("{0} {1}", newTitle, titleSplit[i]);
                         }
                     }
-                    return InternalParse(_newTitle.Trim(), myParsedInfo.Series, myParsedInfo.SeriesTitle);
+                    return InternalParse(newTitle.Trim(), myParsedInfo.Series, myParsedInfo.SeriesTitle);
                 }
             }
 
             // There should be only one file extension
-            if (myParsedInfo.FileExtension.Count > 1)
+            var fileExtension = myParsedInfo.GetItemsInCategory(InfoCategory.FileExtension);
+            if (fileExtension.Count > 1)
             {
                 return new ParsedInfo();
             }
 
             var lengthWithoutExtension = 0;
-            if (myParsedInfo.FileExtension.Count == 1)
+            if (fileExtension.Count == 1)
             {
-                lengthWithoutExtension = myParsedInfo.FileExtension[0].Position;
+                lengthWithoutExtension = fileExtension.First().Position;
             }
 
             // If serie is anime then:
             // - Should be only one hash
             // - Hash should be at the end of the string (there may exist extension)
 
-            ParsedItem realHash = null;
-            var containers = new List<ParsedItem>[] { myParsedInfo.Hash };
+            flags = InfoCategory.All ^ InfoCategory.Hash;
 
-            foreach (var item in myParsedInfo.Hash)
+            foreach (var item in myParsedInfo.GetItemsInCategory(InfoCategory.Hash))
             {
-                if (myParsedInfo.Series != null && myParsedInfo.Series.SeriesType == SeriesTypes.Anime &&
-                    ((lengthWithoutExtension != 0 && item.Position + item.Length == lengthWithoutExtension) ||
-                    (lengthWithoutExtension == 0 && item.Position + item.Length == item.GlobalLength)))
+                if (myParsedInfo.Series == null || myParsedInfo.Series.SeriesType != SeriesTypes.Anime ||
+                    ((lengthWithoutExtension == 0 || item.Position + item.Length != lengthWithoutExtension) &&
+                     (lengthWithoutExtension != 0 || item.Position + item.Length != item.GlobalLength)))
                 {
-                    realHash = item;
-                }
-                else
-                {
-                    // If myParsedInfo doesn't have this item, add to unknown items
-                    if (!myParsedInfo.AnyContains(item, containers))
-                    {
-                        myParsedInfo.UnknownInfo.Add(item);
-                    }
+                    item.Category &= flags;
                 }
             }
 
-            myParsedInfo.Hash.Clear();
-            if (realHash != null)
-            {
-                myParsedInfo.RemoveFromAll(realHash);
-                myParsedInfo.Hash.Add(realHash);
-            }
-
-
-            // Clear non char unknownItems
-
-            myParsedInfo.UnknownInfo.RemoveAll(u => !u.Value.Any(char.IsLetterOrDigit));
+            // Clear non char items
+            myParsedInfo.RemoveAll(u => !u.Value.Any(char.IsLetterOrDigit));
 
             // Release group will be an Unknown item that is only one word
-            foreach (var unk in myParsedInfo.UnknownInfo)
+            foreach (var unk in myParsedInfo.GetItemsInCategory(InfoCategory.Unknown))
             {
                 var splitedUnk = SplitSeparatorsRegex.Split(unk.Value);
                 var pos = unk.Position;
@@ -520,15 +508,22 @@ namespace NzbDrone.Core.Parser
                 {
                     if (ReleaseGroup.IsMatch(splited))
                     {
-                        //myParsedInfo.ReleaseGroup.Add(ReleaseGroup.Match(unk).Groups["ReleaseGroup"].Value);
                         _logger.Debug("Posible Release Group: {0}", splited);
-                        myParsedInfo.ReleaseGroup.Add(new ParsedItem
+                        if (splitedUnk.Length == 1)
                         {
-                            Value = splited,
-                            Position = pos,
-                            GlobalLength = unk.GlobalLength,
-                            Length = splited.Length
-                        });
+                            unk.Category = InfoCategory.ReleaseGroup;
+                        }
+                        else
+                        {
+                            myParsedInfo.AddItem(new ParsedItem
+                            {
+                                Value = splited,
+                                Position = pos,
+                                GlobalLength = unk.GlobalLength,
+                                Length = splited.Length,
+                                Category = InfoCategory.ReleaseGroup
+                            });
+                        }
                     }
                     pos += splited.Length;
                 }
@@ -557,7 +552,7 @@ namespace NzbDrone.Core.Parser
             var result = new QualityModel { Quality = Quality.Unknown };
             var normalizedName = name.Replace('_', ' ').Trim().ToLower();
 
-            foreach (var proper in parsedInfo.Proper)
+            foreach (var proper in parsedInfo.GetItemsInCategory(InfoCategory.Proper))
             {
                 var matches = AnalyzeProper.ProperRegex.Matches(proper.Value);
                 foreach (Match match in matches)
@@ -569,7 +564,7 @@ namespace NzbDrone.Core.Parser
 
                     if (match.Groups["version"].Success)
                     {
-                        int newVersion = Convert.ToInt32(match.Groups["version"].Value);
+                        var newVersion = Convert.ToInt32(match.Groups["version"].Value);
                         if (newVersion > result.Revision.Version)
                         {
                             result.Revision.Version = newVersion;
@@ -578,30 +573,27 @@ namespace NzbDrone.Core.Parser
                 }
             }
 
-            foreach (var real in parsedInfo.Real)
+            foreach (var real in parsedInfo.GetItemsInCategory(InfoCategory.Real))
             {
-                var isReal = !parsedInfo.Season.Any(p => p.End >= real.Position) &&
-                             !parsedInfo.AbsoluteEpisodeNumber.Any(p => p.End >= real.Position) &&
-                             !parsedInfo.Daily.Any(p => p.End >= real.Position);
-
-                if (isReal)
+                if (!parsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.AbsoluteEpisodeNumber |
+                                                   InfoCategory.Daily).Any(p => p.End >= real.Position))
                 {
                     result.Revision.Real++;
                 }
             }
 
-            if (parsedInfo.RawHD.Any())
+            if (parsedInfo.GetItemsInCategory(InfoCategory.RawHD).Any())
             {
                 result.Quality = Quality.RAWHD;
                 return result;
             }
 
-            var source = parsedInfo.Source.Any() ? parsedInfo.Source[0].Value : "";
-            var codec = parsedInfo.Codec.Any() ? parsedInfo.Codec[0].Value : "";
+            var source = parsedInfo.GetItemsInCategory(InfoCategory.Source).Any() ? parsedInfo.GetItemsInCategory(InfoCategory.Source).First().Value : "";
+            var codec = parsedInfo.GetItemsInCategory(InfoCategory.Codec).Any() ? parsedInfo.GetItemsInCategory(InfoCategory.Codec).First().Value : "";
 
             var sourceMatch = AnalyzeSource.SourceRegex.Match(source);
             var codecMatch = AnalyzeCodec.CodecRegex.Match(codec);
-            var resolution = ParseResolution(parsedInfo.Resolution.Any() ? parsedInfo.Resolution[0].Value : "");
+            var resolution = ParseResolution(parsedInfo.GetItemsInCategory(InfoCategory.Resolution).Any() ? parsedInfo.GetItemsInCategory(InfoCategory.Resolution).First().Value : "");
 
             if (sourceMatch.Groups["bluray"].Success)
             {
@@ -826,17 +818,18 @@ namespace NzbDrone.Core.Parser
         {
             var ret = Language.Unknown;
 
-            foreach (var item in info.Language)
+            foreach (var item in info.GetItemsInCategory(InfoCategory.Language))
             {
                 var newLang = AnalyzeLanguage(item.Value);
                 if (ret == Language.Unknown)
                     ret = newLang;
-                if (newLang != ret)
+                if (newLang == ret)
                 {
-                    // TODO: Maybe a multi language item, return higher in priority
-                    if (ret != Language.English)
-                        ret = newLang;
+                    continue;
                 }
+                // TODO: Maybe a multi language item, return higher in priority
+                if (ret != Language.English)
+                    ret = newLang;
             }
 
             if (ret == Language.Unknown)
@@ -844,7 +837,7 @@ namespace NzbDrone.Core.Parser
             return ret;
         }
 
-        private Language AnalyzeLanguage(string item)
+        private static Language AnalyzeLanguage(string item)
         {
             var lowerTitle = item.ToLower();
 
@@ -1021,22 +1014,22 @@ namespace NzbDrone.Core.Parser
             return used;
         }
 
-        private bool FindSeries(List<ParsedItem> unknownItems, ParsedInfo myParsedInfo)
+        private bool FindSeries(ParsedInfo myParsedInfo)
         {
             if (myParsedInfo.Series != null)
             {
                 _logger.Debug("Found Series: {0}", myParsedInfo.Series.Title);
                 return true;
             }
-            foreach (var unknownItem in unknownItems)
+            foreach (var unknownItem in myParsedInfo.GetItemsInCategory(InfoCategory.Unknown))
             {
-                var _title = unknownItem.Value;
-                var newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
+                var title = unknownItem.Value;
+                var newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
 
                 // TODO: Modify this and select only the next and previous possible item(s)
                 if (newSerie == null)
                 {
-                    foreach (var _year in myParsedInfo.Year)
+                    foreach (var year in myParsedInfo.GetItemsInCategory(InfoCategory.Year))
                     {
                         /*_title = String.Format("{0} ({1})", unknownItem.Value, _year.Value);
                         newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
@@ -1045,73 +1038,37 @@ namespace NzbDrone.Core.Parser
                             _title = String.Format("{0} {1}", _year.Value, unknownItem.Value);
                             newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
                         }*/
-                        newSerie = _seriesService.FindByTitle(_title.NormalizeTitle(), Convert.ToInt32(_year.Value));
+                        newSerie = _seriesService.FindByTitle(title.NormalizeTitle(), Convert.ToInt32(year.Value));
                         if (newSerie != null)
                         {
-                            myParsedInfo.RemoveFromAllThatContains(_year);
+                            myParsedInfo.RemoveAll(p => p.Contains(year));
                             break;
                         }
                     }
                 }
                 if (newSerie == null)
                 {
-                    foreach (var _episode in myParsedInfo.AbsoluteEpisodeNumber)
+                    foreach (var item in myParsedInfo.GetItemsInCategory(InfoCategory.AbsoluteEpisodeNumber | InfoCategory.Hash | InfoCategory.Season))
                     {
-                        _title = String.Format("{0} {1}", unknownItem.Value, _episode.Value);
-                        newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
+                        title = String.Format("{0} {1}", unknownItem.Value, item.Value);
+                        newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
                         if (newSerie == null)
                         {
-                            _title = String.Format("{0} {1}", _episode.Value, unknownItem.Value);
-                            newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
+                            title = String.Format("{0} {1}", item.Value, unknownItem.Value);
+                            newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
                         }
                         if (newSerie != null)
                         {
-                            myParsedInfo.RemoveFromAllThatContains(_episode);
-                            break;
-                        }
-                    }
-                }
-                if (newSerie == null)
-                {
-                    foreach (var _hash in myParsedInfo.Hash)
-                    {
-                        _title = String.Format("{0} {1}", unknownItem.Value, _hash.Value);
-                        newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
-                        if (newSerie == null)
-                        {
-                            _title = String.Format("{0} {1}", _hash.Value, unknownItem.Value);
-                            newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
-                        }
-                        if (newSerie != null)
-                        {
-                            myParsedInfo.RemoveFromAllThatContains(_hash);
-                            break;
-                        }
-                    }
-                }
-                if (newSerie == null)
-                {
-                    foreach (var _season in myParsedInfo.Season)
-                    {
-                        _title = String.Format("{0} ({1})", unknownItem.Value, _season.Value);
-                        newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
-                        if (newSerie == null)
-                        {
-                            _title = String.Format("{0} {1}", _season.Value, unknownItem.Value);
-                            newSerie = _seriesService.FindByTitle(_title.NormalizeTitle());
-                        }
-                        if (newSerie != null)
-                        {
-                            myParsedInfo.RemoveFromAllThatContains(_season);
+                            myParsedInfo.RemoveAll(p => p.Contains(item));
                             break;
                         }
                     }
                 }
                 if (newSerie != null)
                 {
-                    unknownItems.Remove(unknownItem);
+                    myParsedInfo.RemoveAll(p => p.Equals(unknownItem));
                     myParsedInfo.Series = newSerie;
-                    myParsedInfo.SeriesTitle = _title;
+                    myParsedInfo.SeriesTitle = title;
                     _logger.Debug("Found Series: {0}", myParsedInfo.Series.Title);
                     return true;
                 }
@@ -1124,17 +1081,16 @@ namespace NzbDrone.Core.Parser
 
         private bool ExtractAbsoluteEpisodeNumber(ParsedInfo parsedInfo, ParsedEpisodeInfo parsedEpisodeInfo)
         {
+            var parsedItems = parsedInfo.GetItemsInCategory(InfoCategory.AbsoluteEpisodeNumber);
             // Removes duplicate items from AbsoluteEpisodeNumber in Season
-            foreach (var res in parsedInfo.AbsoluteEpisodeNumber)
-            {
-                parsedInfo.Season.RemoveAll(season => season.Contains(res));
-                parsedInfo.Season.RemoveAll(season => res.Contains(season));
-            }
+            var flags = InfoCategory.All ^ InfoCategory.Season;
+            parsedItems.ForEach(p => p.Category &= flags);
 
             // Parse absolute episodes
             List<List<int>> listAbsoluteEpisodes = new List<List<int>>();
 
-            foreach (var item in parsedInfo.AbsoluteEpisodeNumber)
+            flags = InfoCategory.All ^ InfoCategory.AbsoluteEpisodeNumber;
+            foreach (var item in parsedItems)
             {
                 var matchCollection = AnalyzeAbsoluteEpisodeNumber.SimpleAbsoluteNumber.Matches(item.Value);
                 var absoluteEpisodes = new List<Capture>();
@@ -1148,6 +1104,7 @@ namespace NzbDrone.Core.Parser
 
                 if (absoluteEpisodes.Count == 0)
                 {
+                    item.Category &= flags;
                     continue;
                 }
                 else if (absoluteEpisodes.Count == 1)
@@ -1159,7 +1116,10 @@ namespace NzbDrone.Core.Parser
                     if (absoluteEpisodes.Count > 2)
                     {
                         if (!AreConsecutive(absoluteEpisodes))
+                        {
+                            item.Category &= flags;
                             continue;
+                        }
                     }
 
                     var first = Convert.ToInt32(absoluteEpisodes.First().Value);
@@ -1167,6 +1127,7 @@ namespace NzbDrone.Core.Parser
 
                     if (first > last)
                     {
+                        item.Category &= flags;
                         continue;
                     }
 
@@ -1174,7 +1135,10 @@ namespace NzbDrone.Core.Parser
 
                     // More than 20 episodes in one file?
                     if (count > 20)
+                    {
+                        item.Category &= flags;
                         continue;
+                    }
 
                     listToAdd = Enumerable.Range(first, count).ToList();
                 }
@@ -1182,52 +1146,27 @@ namespace NzbDrone.Core.Parser
                 // Check if that episodes exists for the serie in the season
                 if (parsedInfo.Series != null)
                 {
-                    bool found = true;
-                    foreach (var absId in listToAdd)
+                    var found = true;
+                    foreach (var ep in listToAdd.Select(absId => _episodeService.FindEpisode(parsedInfo.Series.Id, absId)))
                     {
-                        var ep = _episodeService.FindEpisode(parsedInfo.Series.Id, absId);
                         found = ep != null;
                         if (!found)
                             break;
                     }
                     if (!found)
+                    {
+                        item.Category &= flags;
                         continue;
+                    }
                 }
 
                 listAbsoluteEpisodes.Add(listToAdd);
             }
 
             if (listAbsoluteEpisodes.Count == 0)
-            {
-                if (parsedInfo.Year.Count == 1 && parsedInfo.Series != null)
-                {
-                    int year = Int32.Parse(parsedInfo.Year[0].Value);
-                    int first = 0;
-                    int last = 0;
-                    var episodes = _episodeService.GetEpisodeBySeries(parsedInfo.Series.Id);
-                    foreach (var episode in episodes)
-                    {
-                        DateTime airDate;
-                        if (DateTime.TryParse(episode.AirDate, out airDate))
-                        {
-                            if (airDate.Year == year && episode.AbsoluteEpisodeNumber.HasValue)
-                            {
-                                if (episode.AbsoluteEpisodeNumber.Value < first || first == 0)
-                                    first = episode.AbsoluteEpisodeNumber.Value;
-                                if (episode.AbsoluteEpisodeNumber.Value > last)
-                                    last = episode.AbsoluteEpisodeNumber.Value;
-                            }
-                        }
-                    }
-                    if (first != 0)
-                    {
-                        var count = last - first + 1;
-                        parsedEpisodeInfo.AbsoluteEpisodeNumbers = Enumerable.Range(first, count).ToArray();
-                        return true;
-                    }
-                }
-            }
-            else if (listAbsoluteEpisodes.Count == 1)
+                return false;
+
+            if (listAbsoluteEpisodes.Count == 1)
             {
                 parsedEpisodeInfo.AbsoluteEpisodeNumbers = listAbsoluteEpisodes.First().ToArray();
                 return true;
@@ -1235,10 +1174,9 @@ namespace NzbDrone.Core.Parser
             else if (!listAbsoluteEpisodes.Any(l => l.Count > 1))
             {
                 // if all are single we may have different ids for the same episode
-
                 // TODO: Check which one is episode and which one is global, for now we supose that the lowest one is the episode
-                listAbsoluteEpisodes.OrderBy(l => l.First());
-                parsedEpisodeInfo.AbsoluteEpisodeNumbers = listAbsoluteEpisodes.First().ToArray();
+                _logger.Warn("Absolute episode number is not parsed correctly, returning lowest one");
+                parsedEpisodeInfo.AbsoluteEpisodeNumbers = listAbsoluteEpisodes.OrderBy(l => l.First()).First().ToArray();
                 return true;
             }
             return false;
@@ -1248,8 +1186,9 @@ namespace NzbDrone.Core.Parser
         {
             var airDate = DateTime.Today;
             var asigned = false;
+            var flags = InfoCategory.All ^ InfoCategory.Daily;
 
-            foreach (var newDate in parsedInfo.Daily)
+            foreach (var newDate in parsedInfo.GetItemsInCategory(InfoCategory.Daily))
             {
                 var newYear = 0;
                 var newMonth = 0;
@@ -1287,6 +1226,7 @@ namespace NzbDrone.Core.Parser
 
                 if (newYear <= 1900 || newMonth <= 0 || newDay <= 0)
                 {
+                    newDate.Category &= flags;
                     continue;
                 }
 
@@ -1295,6 +1235,7 @@ namespace NzbDrone.Core.Parser
                 //Check if episode is in the future (most likely a parse error)
                 if (newAirDate > DateTime.Now.AddDays(1).Date || newAirDate < new DateTime(1970, 1, 1))
                 {
+                    newDate.Category &= flags;
                     continue;
                 }
 
@@ -1319,12 +1260,12 @@ namespace NzbDrone.Core.Parser
             return false;
         }
 
-        private bool AreConsecutive(List<Capture> captures)
+        private static bool AreConsecutive(IList<Capture> captures)
         {
             // If more than 2 then all episodes should be consecutives
             var consecutive = true;
             var first = Convert.ToInt32(captures.First().Value);
-            for (int i = 1; i < captures.Count && consecutive; i++)
+            for (var i = 1; i < captures.Count && consecutive; i++)
             {
                 var current = Convert.ToInt32(captures[i].Value);
                 consecutive = first + 1 == current;
@@ -1332,7 +1273,7 @@ namespace NzbDrone.Core.Parser
             }
             return consecutive;
         }
-
+        /*
         private bool ExtractSeasonAndEpisode(ParsedInfo parsedInfo, ParsedEpisodeInfo parsedEpisodeInfo)
         {
             _logger.Debug("Extracting Season and Episode info");
@@ -1415,7 +1356,7 @@ namespace NzbDrone.Core.Parser
                     //If no season was found it should be treated as a mini series or special
                     if (seasons.Count == 0)
                     {
-                        seasonAndEpisode.isMiniOrSpecial = true;
+                        seasonAndEpisode.IsMiniOrSpecial = true;
                         seasonAndEpisode.Season = 1;
                     }
                     else
@@ -1429,9 +1370,9 @@ namespace NzbDrone.Core.Parser
 
                         // Check if that season exists for the serie
 
-                        seasonAndEpisode.isMiniOrSpecial = seasons.First() == 0;
+                        seasonAndEpisode.IsMiniOrSpecial = seasons.First() == 0;
 
-                        if (parsedInfo.Series == null || seasonAndEpisode.isMiniOrSpecial)
+                        if (parsedInfo.Series == null || seasonAndEpisode.IsMiniOrSpecial)
                         {
                             seasonAndEpisode.Season = seasons.First();
                         }
@@ -1596,7 +1537,7 @@ namespace NzbDrone.Core.Parser
                     }
 
                     // Miniseries
-                    if (!episodes.Any() && seasonAndEpisode.isMiniOrSpecial)
+                    if (!episodes.Any() && seasonAndEpisode.IsMiniOrSpecial)
                     {
                         foreach (Match match in AnalyzeSeason.SimpleMiniSerie.Matches(item.Value))
                         {
@@ -1637,7 +1578,7 @@ namespace NzbDrone.Core.Parser
                             continue;
                         }
                         // Check if that episodes exists for the serie in the season
-                        if (parsedInfo.Series != null && !seasonAndEpisode.isMiniOrSpecial)
+                        if (parsedInfo.Series != null && !seasonAndEpisode.IsMiniOrSpecial)
                         {
                             var ep = _episodeService.GetEpisodesBySeason(
                                 parsedInfo.Series.Id,
@@ -1743,7 +1684,7 @@ namespace NzbDrone.Core.Parser
                 return seasonsAndEpisodesParsed;
 
             // Discard Specials and Miniseries
-            ret.RemoveAll(p => p.isMiniOrSpecial);
+            ret.RemoveAll(p => p.IsMiniOrSpecial);
 
             if (ret.Count == 1)
                 return ret;
@@ -1762,6 +1703,8 @@ namespace NzbDrone.Core.Parser
 
             return ret;
         }
+
+    */
         #endregion
     }
 }

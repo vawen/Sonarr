@@ -23,7 +23,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                 foreach (var param in parsedItems)
                 {
                     _logger.Debug("Detected RawHD: {0}", param);
-                    ParsedInfo.AddItem(param, parsedInfo.RawHD);
+                    param.Category = InfoCategory.RawHD;
+                    parsedInfo.AddItem(param);
                 }
             }
             return ret;
