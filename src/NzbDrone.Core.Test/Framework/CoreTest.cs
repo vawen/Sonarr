@@ -33,7 +33,7 @@ namespace NzbDrone.Core.Test.Framework
                 new AnalyzeDaily(TestLogger), 
                 new AnalyzeHash(TestLogger),
                 new AnalyzeLanguage(TestLogger),
-                new Analyzeresolution(TestLogger),
+                new AnalyzeResolution(TestLogger),
                 new AnalyzeSeason(TestLogger),
                 new AnalyzeSource(TestLogger),
                 new AnalyzeSpecial(TestLogger),

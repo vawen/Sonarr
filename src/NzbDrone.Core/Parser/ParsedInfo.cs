@@ -32,6 +32,40 @@ namespace NzbDrone.Core.Parser
         All = 0xFFFFF
     }
 
+    public static class InfoCategoryExtension
+    {
+        public static string Name(this InfoCategory target)
+        {
+            if (target == InfoCategory.Unknown) return "Unknown";
+            var result = "";
+            if ((target & InfoCategory.Title) > 0) result = string.Format("{0} {1}", result, "Title");
+            if ((target & InfoCategory.Source) > 0) result = string.Format("{0} {1}", result, "Source");
+            if ((target & InfoCategory.Resolution) > 0) result = string.Format("{0} {1}", result, "Resolution");
+            if ((target & InfoCategory.Audio) > 0) result = string.Format("{0} {1}", result, "Audio");
+            if ((target & InfoCategory.Season) > 0) result = string.Format("{0} {1}", result, "Season");
+            if ((target & InfoCategory.Codec) > 0) result = string.Format("{0} {1}", result, "Codec");
+            if ((target & InfoCategory.Hash) > 0) result = string.Format("{0} {1}", result, "Hash");
+            if ((target & InfoCategory.Language) > 0) result = string.Format("{0} {1}", result, "Language");
+            if ((target & InfoCategory.ReleaseGroup) > 0) result = string.Format("{0} {1}", result, "ReleaseGroup");
+            if ((target & InfoCategory.Daily) > 0) result = string.Format("{0} {1}", result, "Daily");
+            if ((target & InfoCategory.Special) > 0) result = string.Format("{0} {1}", result, "Special");
+            if ((target & InfoCategory.Year) > 0) result = string.Format("{0} {1}", result, "Year");
+            if ((target & InfoCategory.AbsoluteEpisodeNumber) > 0) result = string.Format("{0} {1}", result, "AbsoluteEpisodeNumber");
+            if ((target & InfoCategory.FileExtension) > 0) result = string.Format("{0} {1}", result, "FileExtension");
+            if ((target & InfoCategory.Proper) > 0) result = string.Format("{0} {1}", result, "Proper");
+            if ((target & InfoCategory.RawHD) > 0) result = string.Format("{0} {1}", result, "RawHD");
+            if ((target & InfoCategory.Real) > 0) result = string.Format("{0} {1}", result, "Real");
+
+            return result.Trim();
+
+        }
+
+        public static InfoCategory RemoveCategory(this InfoCategory item, InfoCategory other)
+        {
+            return item & (InfoCategory.All ^ other);
+        }
+    }
+
     public class ParsedItem
     {
         public string Value { get; set; }
@@ -40,12 +74,13 @@ namespace NzbDrone.Core.Parser
         public int Length { get; set; }
         public int GlobalLength { get; set; }
         public int End => Position + Length - 1;
+        public bool NeedContext { get; set; }
 
         public InfoCategory Category { get; set; } 
 
         public override string ToString()
         {
-            return String.Format("{0} [{1} - {2}]", Value, Position, Length);
+            return String.Format("{0}: {1} [{2} - {3}]", Category.Name(), Value, Position, Length);
         }
 
         public bool Contains(ParsedItem other)
@@ -75,7 +110,8 @@ namespace NzbDrone.Core.Parser
                 Value = newValue,
                 Category = newCategory,
                 Length = Value.Trim().Length,
-                GlobalLength = newGlobalLength
+                GlobalLength = newGlobalLength,
+                Group = Group
             };
         }
 
@@ -91,7 +127,7 @@ namespace NzbDrone.Core.Parser
                 var newPosition = Position + item.Length;
                 var newLength = Length - item.Length;
                 var newValue = Value.Substring(item.Length);
-                var newCategory = item.Category;
+                var newCategory = Category;
                 var newGlobalLength = GlobalLength;
                 ret.Add(new ParsedItem
                 {
@@ -99,7 +135,8 @@ namespace NzbDrone.Core.Parser
                     Length = newLength,
                     Value = newValue,
                     GlobalLength = newGlobalLength,
-                    Category = newCategory
+                    Category = newCategory,
+                    Group = Group
                 });
             }
             else
@@ -108,28 +145,30 @@ namespace NzbDrone.Core.Parser
                 var newLength = item.Position - Position;
                 var newValue = Value.Substring(0, item.Position - Position);
                 var newGlobalLength = GlobalLength;
-                var newCategory = item.Category;
+                var newCategory = Category;
                 ret.Add(new ParsedItem
                 {
                     Position = newPosition,
                     Length = newLength,
                     Value = newValue,
                     GlobalLength = newGlobalLength,
-                    Category = newCategory
+                    Category = newCategory,
+                    Group = Group
                 });
 
                 newPosition = item.Position + item.Length;
                 newValue = Value.Substring(newPosition - Position);
                 newLength = newValue.Length;
                 newGlobalLength = GlobalLength;
-                newCategory = item.Category;
+                newCategory = Category;
                 ret.Add(new ParsedItem
                 {
                     Position = newPosition,
                     Length = newLength,
                     Value = newValue,
                     GlobalLength = newGlobalLength,
-                    Category =  newCategory
+                    Category =  newCategory,
+                    Group = Group
                 });
             }
             return ret.ToArray();
@@ -181,6 +220,7 @@ namespace NzbDrone.Core.Parser
 
     public class ParsedInfo
     {
+        public string TitleToParse { get; set; }
         public Series Series { get; set; }
         public string SeriesTitle { get; set; }
         public bool AbsoluteNumering { get; set; }
@@ -193,10 +233,15 @@ namespace NzbDrone.Core.Parser
             {
                 ret = ItemList.Where(p => p.Category == InfoCategory.Unknown);
             }
+            else if (flags == InfoCategory.All)
+            {
+                ret = ItemList;
+            }
             else
             {
                 ret = ItemList.Where(p => (p.Category & flags) > 0);
             }
+
             if (predicate == null)
             {
                 return ret.ToList();
@@ -275,86 +320,5 @@ namespace NzbDrone.Core.Parser
         {
             return ItemList.RemoveAll(predicate);
         }
-
-/*        public void RemoveFromAll(ParsedItem item)
-        {
-            Title.Remove(item);
-            Source.Remove(item);
-            Resolution.Remove(item);
-            Audio.Remove(item);
-            Season.Remove(item);
-            Codec.Remove(item);
-            Hash.Remove(item);
-            Language.Remove(item);
-            ReleaseGroup.Remove(item);
-            Daily.Remove(item);
-            Special.Remove(item);
-            Year.Remove(item);
-            AbsoluteEpisodeNumber.Remove(item);
-            FileExtension.Remove(item);
-            Proper.Remove(item);
-            RawHD.Remove(item);
-            Real.Remove(item);
-        }
-
-        public void RemoveFromAllThatContains(ParsedItem item)
-        {
-            Title.RemoveAll(p => p.Contains(item));
-            Source.RemoveAll(p => p.Contains(item));
-            Resolution.RemoveAll(p => p.Contains(item));
-            Audio.RemoveAll(p => p.Contains(item));
-            Season.RemoveAll(p => p.Contains(item));
-            Codec.RemoveAll(p => p.Contains(item));
-            Hash.RemoveAll(p => p.Contains(item));
-            Language.RemoveAll(p => p.Contains(item));
-            ReleaseGroup.RemoveAll(p => p.Contains(item));
-            Daily.RemoveAll(p => p.Contains(item));
-            Special.RemoveAll(p => p.Contains(item));
-            Year.RemoveAll(p => p.Contains(item));
-            AbsoluteEpisodeNumber.RemoveAll(p => p.Contains(item));
-            FileExtension.RemoveAll(p => p.Contains(item));
-            Proper.RemoveAll(p => p.Contains(item));
-            RawHD.RemoveAll(p => p.Contains(item));
-            Real.RemoveAll(p => p.Contains(item));
-        }
-
-        public bool AnyContains(ParsedItem item, params List<ParsedItem>[] containers)
-        {
-            if (!containers.Contains(Title) && Title.Contains(item))
-                return true;
-            if (!containers.Contains(Source) && Source.Contains(item))
-                return true;
-            if (!containers.Contains(Resolution) && Resolution.Contains(item))
-                return true;
-            if (!containers.Contains(Audio) && Audio.Contains(item))
-                return true;
-            if (!containers.Contains(Season) && Season.Contains(item))
-                return true;
-            if (!containers.Contains(Codec) && Codec.Contains(item))
-                return true;
-            if (!containers.Contains(Hash) && Hash.Contains(item))
-                return true;
-            if (!containers.Contains(Language) && Language.Contains(item))
-                return true;
-            if (!containers.Contains(ReleaseGroup) && ReleaseGroup.Contains(item))
-                return true;
-            if (!containers.Contains(Daily) && Daily.Contains(item))
-                return true;
-            if (!containers.Contains(Special) && Special.Contains(item))
-                return true;
-            if (!containers.Contains(Year) && Year.Contains(item))
-                return true;
-            if (!containers.Contains(AbsoluteEpisodeNumber) && AbsoluteEpisodeNumber.Contains(item))
-                return true;
-            if (!containers.Contains(FileExtension) && FileExtension.Contains(item))
-                return true;
-            if (!containers.Contains(FileExtension) && Proper.Contains(item))
-                return true;
-            if (!containers.Contains(FileExtension) && RawHD.Contains(item))
-                return true;
-            if (!containers.Contains(FileExtension) && Real.Contains(item))
-                return true;
-            return false;
-        }*/
     }
 }

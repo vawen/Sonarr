@@ -18,11 +18,11 @@ namespace NzbDrone.Core.Parser
     {
         private class SeasonAndEpisode
         {
-            public Nullable<int> Season { get; }
-            public bool IsMiniOrSpecial { get; }
-            public List<int> Episodes { get; }
-            public bool FullSeason { get; }
-            public ParsedItem Item { get; }
+            public Nullable<int> Season { get; set; }
+            public bool IsMiniOrSpecial { get; set; }
+            public List<int> Episodes { get; set; }
+            public bool FullSeason { get; set; }
+            public ParsedItem Item { get; set; }
 
             public SeasonAndEpisode()
             {
@@ -184,7 +184,8 @@ namespace NzbDrone.Core.Parser
             }
 
             // ReleaseGroup
-            if (parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).Any())
+            // TODO: This should be done at the end
+            /*if (parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).Any())
             {
                 // If group start with - probably it is this one
                 var possibleGroups = parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup, p => p.Value.Trim().StartsWith("-"));
@@ -197,7 +198,7 @@ namespace NzbDrone.Core.Parser
                 {
                     parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).First().Value).Groups["ReleaseGroup"].Value;
                 }
-            }
+            }*/
 
             // Language
             parsedEpisodeInfo.Language = ParseLanguage(parsedInfo);
@@ -229,34 +230,39 @@ namespace NzbDrone.Core.Parser
 
                     if (!ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo) && removed > 0)
                     {
-                        posibleAbsEpNumbers.ForEach(s => s.Category = (InfoCategory.All ^ InfoCategory.AbsoluteEpisodeNumber) & s.Category);
-                        //TODO THIS NEED TO BE REDONE!
-                        //parsedInfo.AbsoluteEpisodeNumber = subset;
+                        parsedInfo.GetItemsInCategory(InfoCategory.AbsoluteEpisodeNumber).ForEach(s => s.Category = s.Category.RemoveCategory(InfoCategory.AbsoluteEpisodeNumber));
+                        foreach (var item in subset)
+                        {
+                            parsedInfo.AddItem(item);
+                        }
                         ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo);
                     }
                 }
             }
 
-            //TODO UNCOMENT ALL THIS LATER
-            /*
             // Season and Episode
             if (parsedInfo.Series == null || parsedInfo.Series.SeriesType == SeriesTypes.Anime || parsedInfo.Series.SeriesType == SeriesTypes.Standard)
             {
-                if (parsedInfo.Season.Count > 0)
+                var posibleSeasonInfo = parsedInfo.GetItemsInCategory(InfoCategory.Season);
+                if (posibleSeasonInfo.Any())
                 {
                     // Remove subsets
-                    var subset = parsedInfo.Season.Where(s => parsedInfo.Season.Any(k => !k.Equals(s) && k.Contains(s))).ToList();
-                    parsedInfo.Season.RemoveAll(s => parsedInfo.Season.Any(k => !k.Equals(s) && k.Contains(s)));
+                    var subset = posibleSeasonInfo.Where(s => posibleSeasonInfo.Any(k => !k.Equals(s) && k.Contains(s))).ToList();
+                    var removed = parsedInfo.RemoveAll(s => (s.Category & InfoCategory.Season) == InfoCategory.Season && posibleSeasonInfo.Any(k => !k.Equals(s) && k.Contains(s)));
 
-                    if (!ExtractSeasonAndEpisode(parsedInfo, parsedEpisodeInfo))
+                    if (!ExtractSeasonAndEpisode(parsedInfo, parsedEpisodeInfo) && removed > 0)
                     {
-                        parsedInfo.Season = subset;
+                        parsedInfo.GetItemsInCategory(InfoCategory.Season).ForEach(s => s.Category = s.Category.RemoveCategory(InfoCategory.Season));
+                        foreach (var item in subset)
+                        {
+                            parsedInfo.AddItem(item);
+                        }
                         ExtractSeasonAndEpisode(parsedInfo, parsedEpisodeInfo);
                     }
 
                     if (parsedEpisodeInfo.FullSeason)
                     {
-                        foreach (var unk in parsedInfo.UnknownInfo)
+                        foreach (var unk in parsedInfo.GetItemsInCategory(InfoCategory.Unknown))
                         {
                             if (unk.Value.NormalizeTitle().IndexOf("subpack") >= 0)
                                 return null;
@@ -265,10 +271,56 @@ namespace NzbDrone.Core.Parser
                         }
                     }
                 }
-            }*/
+            }
 
             // Quality
             parsedEpisodeInfo.Quality = ExtractQuality(title, parsedInfo);
+
+
+            foreach (var unk in parsedInfo.GetItemsInCategory(InfoCategory.Unknown))
+            {
+                var splitedUnk = SplitSeparatorsRegex.Split(unk.Value);
+                var pos = unk.Position;
+                foreach (var splited in splitedUnk)
+                {
+                    if (ReleaseGroup.IsMatch(splited))
+                    {
+                        _logger.Debug("Posible Release Group: {0}", splited);
+                        if (splitedUnk.Length == 1)
+                        {
+                            unk.Category = InfoCategory.ReleaseGroup;
+                        }
+                        else
+                        {
+                            parsedInfo.AddItem(new ParsedItem
+                            {
+                                Value = splited,
+                                Position = pos,
+                                GlobalLength = unk.GlobalLength,
+                                Length = splited.Length,
+                                Category = InfoCategory.ReleaseGroup
+                            });
+                        }
+                    }
+                    pos += splited.Length;
+                }
+            }
+
+            if (parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).Any())
+            {
+                // If group start with - probably it is this one
+                var possibleGroups = parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup, p => p.Value.Trim().StartsWith("-"));
+                if (possibleGroups.Any())
+                {
+                    var item = possibleGroups.First();
+                    parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(item.Value).Groups["ReleaseGroup"].Value;
+                }
+                else
+                {
+                    parsedEpisodeInfo.ReleaseGroup = ReleaseGroup.Match(parsedInfo.GetItemsInCategory(InfoCategory.ReleaseGroup).First().Value).Groups["ReleaseGroup"].Value;
+                }
+            }
+
 
 
             return parsedEpisodeInfo;
@@ -314,6 +366,7 @@ namespace NzbDrone.Core.Parser
 
         private List<ParsedItem> PrepareItems(string title)
         {
+            //var _title = title.Replace('_', ' ').Trim();
             var ret = new List<ParsedItem>();
             var splitClaps = SplitClaspRegex.Split(title).Where(s => s.Length > 0);
             var pos = 0;
@@ -356,16 +409,10 @@ namespace NzbDrone.Core.Parser
 
             return ret;
         }
-
-        //private ParsedInfo InternalParse(string title, out List<ParsedItem> unknownItems, Series serie, string seriesTitle)
-        private ParsedInfo InternalParse(string title, Series serie, string seriesTitle)
+        
+        private ParsedInfo Stage1(string title)
         {
             var myParsedInfo = new ParsedInfo();
-            myParsedInfo.Series = serie;
-            myParsedInfo.SeriesTitle = seriesTitle;
-
-            // Info that has been parsed at least once
-            var parsedItems = new List<ParsedItem>();
 
             if (ReversedTitleRegex.IsMatch(title))
             {
@@ -394,13 +441,11 @@ namespace NzbDrone.Core.Parser
                         var gotResult = analyzer.IsContent(item, myParsedInfo, out remains);
                         if (gotResult)
                         {
-                            if (!parsedItems.Contains(item))
-                                parsedItems.Add(item);
-                            newPendingItems.AddRange(remains.Where(remainItem => remainItem.Length > 0));
+                            newPendingItems.AddRange(remains.Where(remainItem => remainItem.Length > 0 && remainItem.Value.Any(char.IsLetterOrDigit)));
                         }
                         gotAnyResult |= gotResult;
                     }
-                    if (gotAnyResult || myParsedInfo.GetItemsInCategory(InfoCategory.Unknown).Contains(item))
+                    if (gotAnyResult || myParsedInfo.GetItemsInCategory(InfoCategory.All).Contains(item))
                     {
                         continue;
                     }
@@ -408,28 +453,65 @@ namespace NzbDrone.Core.Parser
                     myParsedInfo.AddItem(item);
                 }
                 pendingItems.Clear();
-                //TODO: This doesn't cut it
-                newPendingItems.ForEach(s =>
-                {
-                    s.Trim();
-                    if (!pendingItems.Any(p => p.Contains(s)))
-                    {
-                        pendingItems.Add(s);
-                    }
-                });
-            } while (newPendingItems.Any());
+                pendingItems.AddRange(newPendingItems.Select(s => s.Trim()));
+            } while (pendingItems.Any());
+
+            // Clear non char or digit items
+            myParsedInfo.RemoveAll(u => !u.Value.Any(char.IsLetterOrDigit));
+
+            // If season and daily overlaps then remove that season
+            var items = myParsedInfo.GetItemsInCategory(InfoCategory.Season, p => myParsedInfo.GetItemsInCategory(InfoCategory.Daily).Any(s => p != s && s.Intersect(p)));
+            myParsedInfo.RemoveAll(p => items.Contains(p));
 
             // If an item is season or hash and resolution, set is as resolution only
             var flags = InfoCategory.All ^ InfoCategory.Season ^ InfoCategory.Hash;
-            var items = myParsedInfo.GetItemsInCategory(InfoCategory.Resolution);
-            myParsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.Hash, p => items.Any(s => s.Contains(p))).ForEach(item => item.Category &= flags);
+            items = myParsedInfo.GetItemsInCategory(InfoCategory.Resolution);
+            myParsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.Hash, p => items.Any(s => s.Contains(p) || p.Contains(s))).ForEach(item => item.Category &= flags);
 
             // If codec match as absoluteepisodenumber or season, remove it
             flags = InfoCategory.All ^ InfoCategory.Season ^ InfoCategory.AbsoluteEpisodeNumber;
             items = myParsedInfo.GetItemsInCategory(InfoCategory.Codec);
-            myParsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.AbsoluteEpisodeNumber, p => items.Any(s => s.Contains(p))).ForEach(item => item.Category &= flags);
+            myParsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.AbsoluteEpisodeNumber, p => items.Any(s => s.Contains(p) || p.Contains(s))).ForEach(item => item.Category &= flags);
 
-            // Try to find the series name
+            // TODO: Clean unknown that are overlapped completly.
+
+            // There should be only one file extension
+            var fileExtension = myParsedInfo.GetItemsInCategory(InfoCategory.FileExtension).FirstOrDefault();
+
+            var lengthWithoutExtension = 0;
+            if (fileExtension != null)
+            {
+                lengthWithoutExtension = fileExtension.Position;
+            }
+
+            // - Should be only one hash
+            // - Hash should be at the end of the string (there may exist extension)
+            flags = InfoCategory.All ^ InfoCategory.Hash;
+            foreach (var item in myParsedInfo.GetItemsInCategory(InfoCategory.Hash))
+            {
+                if (((lengthWithoutExtension == 0 || item.Position + item.Length != lengthWithoutExtension) &&
+                     (lengthWithoutExtension != 0 || item.Position + item.Length != item.GlobalLength)))
+                {
+                    item.Category &= flags;
+                }
+            }
+
+            foreach (var item in myParsedInfo.GetItemsInCategory(InfoCategory.Season, p => p.Category == InfoCategory.Season))
+            {
+                var aux = myParsedInfo.GetItemsInCategory(InfoCategory.All, p => p.Position > item.End).OrderBy(p => p.Position);
+                var next = aux.FirstOrDefault();
+                item.NeedContext = (next != null && (next.Category == InfoCategory.Unknown || next.Category == InfoCategory.Season));
+            }
+
+            return myParsedInfo;
+        }
+
+        private ParsedInfo InternalParse(string title, Series serie, string seriesTitle)
+        {
+            var myParsedInfo = Stage1(title);
+            myParsedInfo.Series = serie;
+            myParsedInfo.SeriesTitle = seriesTitle;
+
             if (!FindSeriesv2(myParsedInfo))
             {
                 var titleSplit = PrepareTitle(title);
@@ -448,40 +530,8 @@ namespace NzbDrone.Core.Parser
                 }
             }
 
-            // There should be only one file extension
-            var fileExtension = myParsedInfo.GetItemsInCategory(InfoCategory.FileExtension);
-            if (fileExtension.Count > 1)
-            {
-                return new ParsedInfo();
-            }
-
-            var lengthWithoutExtension = 0;
-            if (fileExtension.Count == 1)
-            {
-                lengthWithoutExtension = fileExtension.First().Position;
-            }
-
-            // If serie is anime then:
-            // - Should be only one hash
-            // - Hash should be at the end of the string (there may exist extension)
-
-            flags = InfoCategory.All ^ InfoCategory.Hash;
-
-            foreach (var item in myParsedInfo.GetItemsInCategory(InfoCategory.Hash))
-            {
-                if (myParsedInfo.Series == null || myParsedInfo.Series.SeriesType != SeriesTypes.Anime ||
-                    ((lengthWithoutExtension == 0 || item.Position + item.Length != lengthWithoutExtension) &&
-                     (lengthWithoutExtension != 0 || item.Position + item.Length != item.GlobalLength)))
-                {
-                    item.Category &= flags;
-                }
-            }
-
-            // Clear non char items
-            myParsedInfo.RemoveAll(u => !u.Value.Any(char.IsLetterOrDigit));
-
             // Release group will be an Unknown item that is only one word
-            foreach (var unk in myParsedInfo.GetItemsInCategory(InfoCategory.Unknown))
+            /*foreach (var unk in myParsedInfo.GetItemsInCategory(InfoCategory.Unknown))
             {
                 var splitedUnk = SplitSeparatorsRegex.Split(unk.Value);
                 var pos = unk.Position;
@@ -508,16 +558,17 @@ namespace NzbDrone.Core.Parser
                     }
                     pos += splited.Length;
                 }
-            }
+            }*/
 
             return myParsedInfo;
+
         }
         #endregion
 
         #region Quality extraction
         private static Resolution ParseResolution(String name)
         {
-            var match = Analyzeresolution.ResolutionRegex.Match(name);
+            var match = AnalyzeResolution.ResolutionRegex.Match(name);
 
             if (!match.Success) return Resolution.Unknown;
             if (match.Groups["_480p"].Success) return Resolution._480p;
@@ -1048,21 +1099,52 @@ namespace NzbDrone.Core.Parser
             }
             foreach (var unknownItem in myParsedInfo.GetItemsInCategory(InfoCategory.Unknown))
             {
-                var title = unknownItem.Value;
-                var newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
+                var title = "";
+                Series newSerie = null;
+
+                // Get items in the same group
+                var otherItems = myParsedInfo.GetItemsInCategory(InfoCategory.All, p => p.Group == unknownItem.Group).OrderBy(p => p.Position);
+
+                var leftItem = otherItems.Where(p => p.End < unknownItem.Position).OrderByDescending(p => p.End).ThenBy(p => p.Length).FirstOrDefault();
+                var rightItem = otherItems.Where(p => p.Position > unknownItem.End).OrderBy(p => p.Position).ThenBy(p => p.Length).FirstOrDefault();
+
+                if (leftItem != null && rightItem != null)
+                {
+                    title = string.Format("{0} {1} {2}", leftItem.Value, unknownItem.Value, rightItem.Value);
+                    newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
+                    if (newSerie != null)
+                    {
+                        leftItem.Category = InfoCategory.Title;
+                        rightItem.Category = InfoCategory.Title;
+                    }
+                }
+
+                if (leftItem != null && newSerie == null)
+                {
+                    title = string.Format("{0} {1}", leftItem.Value, unknownItem.Value);
+                    newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
+                    if (newSerie != null)
+                    {
+                        leftItem.Category = InfoCategory.Title;
+                    }
+                }
+
+                if (rightItem != null && newSerie == null)
+                {
+                    title = string.Format("{0} {1}", unknownItem.Value, rightItem.Value);
+                    newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
+                    if (newSerie != null)
+                    {
+                        rightItem.Category = InfoCategory.Title;
+                    }
+                }
 
                 if (newSerie == null)
                 {
-                    foreach (var year in myParsedInfo.GetItemsInCategory(InfoCategory.Year))
-                    {
-                        newSerie = _seriesService.FindByTitle(title.NormalizeTitle(), Convert.ToInt32(year.Value));
-                        if (newSerie != null)
-                        {
-                            myParsedInfo.RemoveAll(p => p.Contains(year));
-                            break;
-                        }
-                    }
+                    title = unknownItem.Value;
+                    newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
                 }
+
                 if (newSerie != null)
                 {
                     unknownItem.Category = InfoCategory.Title;
@@ -1232,14 +1314,7 @@ namespace NzbDrone.Core.Parser
                 parsedEpisodeInfo.AbsoluteEpisodeNumbers = listAbsoluteEpisodes.First().ToArray();
                 return true;
             }
-            else if (!listAbsoluteEpisodes.Any(l => l.Count > 1))
-            {
-                // if all are single we may have different ids for the same episode
-                // TODO: Check which one is episode and which one is global, for now we supose that the lowest one is the episode
-                _logger.Warn("Absolute episode number is not parsed correctly, returning lowest one");
-                parsedEpisodeInfo.AbsoluteEpisodeNumbers = listAbsoluteEpisodes.OrderBy(l => l.First()).First().ToArray();
-                return true;
-            }
+
             return false;
         }
 
@@ -1321,6 +1396,20 @@ namespace NzbDrone.Core.Parser
             return false;
         }
 
+        private static bool AreConsecutive(IList<int> captures)
+        {
+            // If more than 2 then all episodes should be consecutives
+            var consecutive = true;
+            var first = Convert.ToInt32(captures.First());
+            for (var i = 1; i < captures.Count && consecutive; i++)
+            {
+                var current = Convert.ToInt32(captures[i]);
+                consecutive = first + 1 == current;
+                first = current;
+            }
+            return consecutive;
+        }
+
         private static bool AreConsecutive(IList<Capture> captures)
         {
             // If more than 2 then all episodes should be consecutives
@@ -1334,21 +1423,23 @@ namespace NzbDrone.Core.Parser
             }
             return consecutive;
         }
-        /*
+        
         private bool ExtractSeasonAndEpisode(ParsedInfo parsedInfo, ParsedEpisodeInfo parsedEpisodeInfo)
         {
             _logger.Debug("Extracting Season and Episode info");
-            if (parsedInfo.Season.Count > 0)
+            var posibleSeasonInfo = parsedInfo.GetItemsInCategory(InfoCategory.Season);
+            if (posibleSeasonInfo.Count > 0)
             {
                 List<SeasonAndEpisode> seasonsAndEpisodesParsed = new List<SeasonAndEpisode>();
 
-                foreach (var item in parsedInfo.Season)
+                foreach (var item in posibleSeasonInfo)
                 {
                     var seasonAndEpisode = new SeasonAndEpisode();
                     seasonAndEpisode.Item = item;
 
                     var seasons = new List<int>();
 
+                    #region SeasonAnalisis
                     foreach (Match match in AnalyzeSeason.SeasonAndEpisodeWord.Matches(item.Value))
                     {
                         foreach (Capture seasonCapture in match.Groups["season"].Captures)
@@ -1358,7 +1449,6 @@ namespace NzbDrone.Core.Parser
                                 seasons.Add(parsedSeason);
                         }
                     }
-
                     if (!seasons.Any())
                     {
                         foreach (Match match in AnalyzeSeason.WeirdSeason.Matches(item.Value))
@@ -1426,6 +1516,7 @@ namespace NzbDrone.Core.Parser
                         if (seasons.Distinct().Count() > 1)
                         {
                             _logger.Debug("Discarted {0} - more than one season detected.", item);
+                            item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                             continue;
                         }
 
@@ -1444,6 +1535,7 @@ namespace NzbDrone.Core.Parser
                         else
                         {
                             _logger.Debug("Discarted {0} - season detected is not included in the serie.", item);
+                            item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                             continue;
                         }
                     }
@@ -1454,7 +1546,9 @@ namespace NzbDrone.Core.Parser
                         seasonsAndEpisodesParsed.Add(seasonAndEpisode);
                         continue;
                     }
+                    #endregion
 
+                    #region EpisodeAnalisis
                     var episodes = new List<int>();
 
                     foreach (Match match in AnalyzeSeason.SeasonAndEpisodeWord.Matches(item.Value))
@@ -1466,6 +1560,7 @@ namespace NzbDrone.Core.Parser
                             if (!AreConsecutive(episodeCaptures))
                             {
                                 _logger.Debug("Discarted {0} - episodes are not consecutives.", item);
+                                item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                 continue;
                             }
                         }
@@ -1477,6 +1572,7 @@ namespace NzbDrone.Core.Parser
                             if (first > last)
                             {
                                 _logger.Debug("Discarted {0} - episodes are not correctly ordered", item);
+                                item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                 continue;
                             }
 
@@ -1496,6 +1592,7 @@ namespace NzbDrone.Core.Parser
                                 if (!AreConsecutive(episodeCaptures))
                                 {
                                     _logger.Debug("Discarted {0} - episodes are not consecutives.", item);
+                                    item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                     continue;
                                 }
                             }
@@ -1504,18 +1601,24 @@ namespace NzbDrone.Core.Parser
                                 var first = Convert.ToInt32(episodeCaptures.First().Value);
                                 var last = Convert.ToInt32(episodeCaptures.Last().Value);
 
+                                if (item.NeedContext && parsedInfo.Series != null)
+                                {
+                                    _logger.Warn("CHECK HERE IF UNKNOWN ITEM IS EPISODE NAME");
+                                }
+
                                 if (first > last)
                                 {
                                     // There are only 2 items? if so then ignore last number
                                     // TODO: Do something better
                                     if (episodeCaptures.Count == 2)
                                     {
-                                        _logger.Warn("{0} - discarting episode info from {1}", item, last);
+                                        //_logger.Warn("{0} - discarting episode info from {1}", item, last);
                                         last = first;
                                     }
                                     else
                                     {
                                         _logger.Debug("Discarted {0} - episodes are not correctly ordered", item);
+                                        item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                         continue;
                                     }
                                 }
@@ -1537,11 +1640,17 @@ namespace NzbDrone.Core.Parser
                                 if (!AreConsecutive(episodeCaptures))
                                 {
                                     _logger.Debug("Discarted {0} - episodes are not consecutives.", item);
+                                    item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                     continue;
                                 }
                             }
                             if (episodeCaptures.Any())
                             {
+                                if (item.NeedContext && parsedInfo.Series != null)
+                                {
+                                    _logger.Warn("CHECK HERE IF UNKNOWN ITEM IS EPISODE NAME");
+                                }
+
                                 var first = Convert.ToInt32(episodeCaptures.First().Value);
                                 var last = Convert.ToInt32(episodeCaptures.Last().Value);
 
@@ -1551,11 +1660,13 @@ namespace NzbDrone.Core.Parser
                                     // TODO: Do something better
                                     if (episodeCaptures.Count == 2)
                                     {
-                                        _logger.Warn("{0} - discarting episode info from {1}", item, last);
+                                        //_logger.Warn("{0} - discarting episode info from {1}", item, last);
                                         last = first;
                                     }
                                     else
                                     {
+                                        _logger.Debug("Discarted {0} - episodes are not correctly ordered", item);
+                                        item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                         continue;
                                     }
                                 }
@@ -1577,6 +1688,7 @@ namespace NzbDrone.Core.Parser
                                 if (!AreConsecutive(episodeCaptures))
                                 {
                                     _logger.Debug("Discarted {0} - episodes are not consecutives.", item);
+                                    item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                     continue;
                                 }
                             }
@@ -1588,6 +1700,7 @@ namespace NzbDrone.Core.Parser
                                 if (first > last)
                                 {
                                     _logger.Debug("Discarted {0} - episodes are not correctly ordered", item);
+                                    item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                     continue;
                                 }
 
@@ -1609,6 +1722,7 @@ namespace NzbDrone.Core.Parser
                                 if (!AreConsecutive(episodeCaptures))
                                 {
                                     _logger.Debug("Discarted {0} - episodes are not consecutives.", item);
+                                    item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                     continue;
                                 }
                             }
@@ -1620,6 +1734,7 @@ namespace NzbDrone.Core.Parser
                                 if (first > last)
                                 {
                                     _logger.Debug("Discarted {0} - episodes are not correctly ordered", item);
+                                    item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                     continue;
                                 }
 
@@ -1636,6 +1751,7 @@ namespace NzbDrone.Core.Parser
                         if (episodes.Count > 20)
                         {
                             _logger.Debug("Discarted {0} - more than 20 episodes in one file", item);
+                            item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                             continue;
                         }
                         // Check if that episodes exists for the serie in the season
@@ -1652,6 +1768,7 @@ namespace NzbDrone.Core.Parser
                             else
                             {
                                 _logger.Debug("Discarted {0} - episodes doesn't exist for the serie", item);
+                                item.Category = item.Category.RemoveCategory(InfoCategory.Season);
                                 continue;
                             }
                         }
@@ -1661,6 +1778,7 @@ namespace NzbDrone.Core.Parser
                         }
                         seasonsAndEpisodesParsed.Add(seasonAndEpisode);
                     }
+                    #endregion
                 }
 
                 return SelectSeasonAndEpisode(seasonsAndEpisodesParsed, parsedInfo, parsedEpisodeInfo);
@@ -1692,7 +1810,10 @@ namespace NzbDrone.Core.Parser
 
                     if (seasonsAndEpisodesParsed.Count == 1)
                     {
-                        return SelectSeasonAndEpisode(seasonsAndEpisodesParsed, parsedInfo, parsedEpisodeInfo);
+                        parsedEpisodeInfo.SeasonNumber = seasonsAndEpisodesParsed.First().Season.Value;
+                        parsedEpisodeInfo.FullSeason = seasonsAndEpisodesParsed.First().FullSeason;
+                        parsedEpisodeInfo.EpisodeNumbers = seasonsAndEpisodesParsed.First().Episodes.ToArray();
+                        return true;
                     }
 
                     if (!seasonsAndEpisodesParsed.All(p => p.Season == seasonsAndEpisodesParsed.First().Season))
@@ -1710,6 +1831,15 @@ namespace NzbDrone.Core.Parser
                     //If all episodes are singles and all have the same season (S01E01 - S01E03)
                     if (seasonsAndEpisodesParsed.All(p => p.Episodes.Count == 1))
                     {
+                        if (seasonsAndEpisodesParsed.Count > 2)
+                        {
+                            if (!AreConsecutive(seasonsAndEpisodesParsed.Select(ep => ep.Episodes.FirstOrDefault()).ToList()))
+                            {
+                                _logger.Debug("SeasonAndEpisode: Discarted episodes are not consecutives.");
+                                return false;
+                            }
+                        }
+
                         var first = Convert.ToInt32(seasonsAndEpisodesParsed.First().Episodes.First());
                         var last = Convert.ToInt32(seasonsAndEpisodesParsed.Last().Episodes.Last());
 
@@ -1736,7 +1866,7 @@ namespace NzbDrone.Core.Parser
             var ret = new List<SeasonAndEpisode>();
             ret.AddRange(seasonsAndEpisodesParsed);
 
-            ret.RemoveAll(p => parsedInfo.Year.Contains(p.Item));
+            ret.RemoveAll(p => parsedInfo.GetItemsInCategory(InfoCategory.Year).Contains(p.Item));
 
             if (ret.Count == 1)
                 return ret;
@@ -1764,8 +1894,6 @@ namespace NzbDrone.Core.Parser
 
             return ret;
         }
-
-    */
         #endregion
     }
 }

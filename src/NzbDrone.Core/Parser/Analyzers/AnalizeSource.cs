@@ -5,8 +5,6 @@ namespace NzbDrone.Core.Parser.Analyzers
 {
     public class AnalyzeSource : AnalyzeContent
     {
-        public readonly Logger _logger;
-
         public static readonly Regex SourceRegex = new Regex(@"(\b|_)(?:
                               (?<bluray>BluRay|Blu-Ray|HDDVD|BD)|
                               (?<webdl>WEB[-_. ]DL|WEBDL|WebRip|iTunesHD|WebHD)|
@@ -23,25 +21,9 @@ namespace NzbDrone.Core.Parser.Analyzers
                              RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 
         public AnalyzeSource(Logger logger)
-            : base(SourceRegex)
+            : base(SourceRegex, logger)
         {
-            _logger = logger;
-        }
-
-        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
-        {
-            ParsedItem[] parsedItems;
-            bool ret = IsContent(item, out parsedItems, out notParsed);
-            if (ret)
-            {
-                foreach (var param in parsedItems)
-                {
-                    _logger.Debug("Detected Source: {0}", param);
-                    param.Category = InfoCategory.Source;          
-                    parsedInfo.AddItem(param);
-                }
-            }
-            return ret;
+            Category = InfoCategory.Source;
         }
     }
 }

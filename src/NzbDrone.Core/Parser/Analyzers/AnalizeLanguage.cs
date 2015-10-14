@@ -5,8 +5,6 @@ namespace NzbDrone.Core.Parser.Analyzers
 {
     public class AnalyzeLanguage : AnalyzeContent
     {
-        private readonly Logger _logger;
-
         private static readonly Regex SimpleLanguageRegex = new Regex(@"(?:\b|_)(?:english|french|spanish|danish|dutch|japanese|cantonese|mandarin|korean|russian|polish|vietnamese|swedish|norwegian|nordic|finnish|turkish|portuguese|hungarian)(?:\b|_)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -18,25 +16,9 @@ namespace NzbDrone.Core.Parser.Analyzers
             {
                 SimpleLanguageRegex,
                 LanguageRegex,
-            })
+            }, logger)
         {
-            _logger = logger;
-        }
-
-        public override bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
-        {
-            ParsedItem[] parsedItems;
-            bool ret = IsContent(item, out parsedItems, out notParsed);
-            if (ret)
-            {
-                foreach (var param in parsedItems)
-                {
-                    _logger.Debug("Detected Language: {0}", param);
-                    param.Category = InfoCategory.Language;
-                    parsedInfo.AddItem(param);
-                }
-            }
-            return ret;
+            Category = InfoCategory.Language;
         }
     }
 }

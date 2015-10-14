@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using NLog;
 
 namespace NzbDrone.Core.Parser.Analyzers
 {
@@ -10,20 +11,39 @@ namespace NzbDrone.Core.Parser.Analyzers
 
     public abstract class AnalyzeContent : IAnalyzeContent
     {
-
-        public AnalyzeContent(Regex regex)
-        {
-            RegexArray = new Regex[] { regex };
-        }
-
-        public AnalyzeContent(Regex[] regex)
-        {
-            RegexArray = regex;
-        }
-
+        protected InfoCategory Category;
+        private readonly Logger _logger;
         protected Regex[] RegexArray { get; set; }
 
-        public abstract bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed);
+        public AnalyzeContent(Regex regex, Logger logger)
+        {
+            RegexArray = new Regex[] { regex };
+            _logger = logger;
+            Category = InfoCategory.Unknown;
+        }
+
+        public AnalyzeContent(Regex[] regex, Logger logger)
+        {
+            RegexArray = regex;
+            _logger = logger;
+            Category = InfoCategory.Unknown;
+        }
+
+        public virtual bool IsContent(ParsedItem item, ParsedInfo parsedInfo, out ParsedItem[] notParsed)
+        {
+            ParsedItem[] parsedItems;
+            var ret = IsContent(item, out parsedItems, out notParsed);
+            if (!ret)
+            {
+                return false;
+            }
+            foreach (var param in parsedItems)
+            {
+                _logger.Debug("Detected {0}", param);
+                parsedInfo.AddItem(param.Trim());
+            }
+            return true;
+        }
 
         public bool IsContent(ParsedItem item, out ParsedItem[] parsedItems, out ParsedItem[] notParsed)
         {
@@ -43,7 +63,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                                 Length = match.Length,
                                 Position = item.Position + match.Index,
                                 GlobalLength = item.GlobalLength,
-                                Group = item.Group
+                                Group = item.Group,
+                                Category = Category
                             };
                         _parsedItems.Add(parsedItem);
                         _splitInfo.AddRange(item.Split(parsedItem));
