@@ -42,7 +42,8 @@ namespace NzbDrone.Core.Parser.Analyzers
                                 Value = match.Value,
                                 Length = match.Length,
                                 Position = item.Position + match.Index,
-                                GlobalLength = item.GlobalLength
+                                GlobalLength = item.GlobalLength,
+                                Group = item.Group
                             };
                         _parsedItems.Add(parsedItem);
                         _splitInfo.AddRange(item.Split(parsedItem));

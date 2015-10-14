@@ -35,6 +35,7 @@ namespace NzbDrone.Core.Parser
     public class ParsedItem
     {
         public string Value { get; set; }
+        public int Group { get; set; }
         public int Position { get; set; }
         public int Length { get; set; }
         public int GlobalLength { get; set; }

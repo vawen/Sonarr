@@ -229,7 +229,7 @@ namespace NzbDrone.Core.Parser
 
                     if (!ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo) && removed > 0)
                     {
-                        posibleAbsEpNumbers.ForEach(s => s.Category = (InfoCategory.All ^ InfoCategory.AbsoluteEpisodeNumber) & s.Category );
+                        posibleAbsEpNumbers.ForEach(s => s.Category = (InfoCategory.All ^ InfoCategory.AbsoluteEpisodeNumber) & s.Category);
                         //TODO THIS NEED TO BE REDONE!
                         //parsedInfo.AbsoluteEpisodeNumber = subset;
                         ExtractAbsoluteEpisodeNumber(parsedInfo, parsedEpisodeInfo);
@@ -316,15 +316,17 @@ namespace NzbDrone.Core.Parser
         {
             var ret = new List<ParsedItem>();
             var splitClaps = SplitClaspRegex.Split(title).Where(s => s.Length > 0);
-            int pos = 0;
+            var pos = 0;
+            var group = 0;
             foreach (var item in splitClaps)
             {
                 var splitP = SplitParenthesisRegex.Split(item).Where(s => s.Length > 0);
+                group++;
                 foreach (var inner in splitP)
                 {
                     if (inner.Any(char.IsLetterOrDigit))
                     {
-                        var parsedItem = new ParsedItem { Value = inner.Trim(), Length = inner.Length, Position = pos, Category =  InfoCategory.Unknown};
+                        var parsedItem = new ParsedItem { Value = inner.Trim(), Length = inner.Length, Position = pos, Category = InfoCategory.Unknown, Group = group };
                         ret.Add(parsedItem);
                     }
                     pos += inner.Length;
@@ -417,39 +419,18 @@ namespace NzbDrone.Core.Parser
                 });
             } while (newPendingItems.Any());
 
-            // Removes ResolutionInfo from Season and Hash
-            /*foreach (var resolution in myParsedInfo.Resolution)
-            {
-                // If Season Contains the Resolution item, remove it from season
-                myParsedInfo.Season.RemoveAll(season => season.Contains(resolution));
-
-                // If Resolution Contains the Season string and there is no more useful chars, remove it from season
-                myParsedInfo.Season.RemoveAll(season => resolution.Contains(season));
-
-                // If Hash Contains the Resolution string and there is no more useful chars, remove it from hash
-                myParsedInfo.Hash.RemoveAll(hash => resolution.Length == 8 && hash.Contains(resolution));
-            }*/
-
             // If an item is season or hash and resolution, set is as resolution only
             var flags = InfoCategory.All ^ InfoCategory.Season ^ InfoCategory.Hash;
-            myParsedInfo.GetItemsInCategory(InfoCategory.Resolution).ForEach(item => item.Category&=flags);
+            var items = myParsedInfo.GetItemsInCategory(InfoCategory.Resolution);
+            myParsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.Hash, p => items.Any(s => s.Contains(p))).ForEach(item => item.Category &= flags);
 
             // If codec match as absoluteepisodenumber or season, remove it
-
             flags = InfoCategory.All ^ InfoCategory.Season ^ InfoCategory.AbsoluteEpisodeNumber;
-            myParsedInfo.GetItemsInCategory(InfoCategory.Codec).ForEach(item => item.Category &= flags);
-
-            /*foreach (var codec in myParsedInfo.Codec)
-            {
-                myParsedInfo.Season.RemoveAll(season => season.Contains(codec));
-                myParsedInfo.Season.RemoveAll(season => codec.Contains(season));
-
-                myParsedInfo.AbsoluteEpisodeNumber.RemoveAll(ep => ep.Contains(codec));
-                myParsedInfo.AbsoluteEpisodeNumber.RemoveAll(ep => codec.Contains(ep));
-            }*/
+            items = myParsedInfo.GetItemsInCategory(InfoCategory.Codec);
+            myParsedInfo.GetItemsInCategory(InfoCategory.Season | InfoCategory.AbsoluteEpisodeNumber, p => items.Any(s => s.Contains(p))).ForEach(item => item.Category &= flags);
 
             // Try to find the series name
-            if (!FindSeries(myParsedInfo))
+            if (!FindSeriesv2(myParsedInfo))
             {
                 var titleSplit = PrepareTitle(title);
                 var titlePosition = FindSeries(titleSplit, myParsedInfo);
@@ -1012,6 +993,86 @@ namespace NzbDrone.Core.Parser
                 }
             }
             return used;
+        }
+
+        private bool FindSeriesByGroupsv2(ParsedInfo parsedInfo)
+        {
+            var used = new List<ParsedItem>();
+            var _title = "";
+
+            var groups = parsedInfo.GetItemsInCategory(InfoCategory.All).GroupBy(p => p.Group);
+            foreach (var group in groups)
+            {
+                for (int i = 0; i < group.Count<ParsedItem>() && parsedInfo.Series == null; i++)
+                {
+                    used.Clear();
+                    var item = group.ElementAt(i);
+                    used.Add(item);
+                    _title = item.Value;
+                    parsedInfo.Series = _seriesService.FindByTitle(_title.NormalizeTitle());
+                    if (parsedInfo.Series == null)
+                    {
+                        var rest = "";
+                        for (int j = i + 1; j < group.Count<ParsedItem>() && parsedInfo.Series == null; j++)
+                        {
+                            used.Add(group.ElementAt(j));
+                            rest = String.Format("{0} {1}", rest, group.ElementAt(j));
+                            _title = String.Format("{0} {1}", item, rest);
+                            parsedInfo.Series = _seriesService.FindByTitle(_title.NormalizeTitle());
+                        }
+                    }
+                }
+
+                if (parsedInfo.Series != null)
+                    break;
+            }
+            if (parsedInfo.Series != null)
+            {
+                foreach (var item in used)
+                {
+                    item.Category = InfoCategory.Title;
+                }
+                parsedInfo.SeriesTitle = _title;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool FindSeriesv2(ParsedInfo myParsedInfo)
+        {
+            if (myParsedInfo.Series != null)
+            {
+                _logger.Debug("Found Series: {0}", myParsedInfo.Series.Title);
+                return true;
+            }
+            foreach (var unknownItem in myParsedInfo.GetItemsInCategory(InfoCategory.Unknown))
+            {
+                var title = unknownItem.Value;
+                var newSerie = _seriesService.FindByTitle(title.NormalizeTitle());
+
+                if (newSerie == null)
+                {
+                    foreach (var year in myParsedInfo.GetItemsInCategory(InfoCategory.Year))
+                    {
+                        newSerie = _seriesService.FindByTitle(title.NormalizeTitle(), Convert.ToInt32(year.Value));
+                        if (newSerie != null)
+                        {
+                            myParsedInfo.RemoveAll(p => p.Contains(year));
+                            break;
+                        }
+                    }
+                }
+                if (newSerie != null)
+                {
+                    unknownItem.Category = InfoCategory.Title;
+                    myParsedInfo.Series = newSerie;
+                    myParsedInfo.SeriesTitle = title;
+                    _logger.Debug("Found Series: {0}", myParsedInfo.Series.Title);
+                    return true;
+                }
+            }
+            return false;
         }
 
         private bool FindSeries(ParsedInfo myParsedInfo)
